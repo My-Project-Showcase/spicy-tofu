@@ -2,7 +2,7 @@ using Domain.Runtime.Environment.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 
-namespace Web.Extensions;
+namespace Web.Extension;
 
 public static class WebExtensions
 {
