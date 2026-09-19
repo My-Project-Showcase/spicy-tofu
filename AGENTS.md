@@ -25,6 +25,18 @@ Dependencies point inward. Domain depends on nothing.
 
 Platform implementations are discovered and wired by the reflection-based resolver. To add platform behavior, implement a core interface in the platform assembly and let the resolver find it.
 
+## Configuration
+
+Settings live in `appsettings.json`, split by owner:
+
+- Core sections (`SpicyTofu`, `Projects`, `TestExecution`) are platform-neutral and bound by the core.
+- `Playwright` is read only by the web project. `Appium` is read only by the mobile project.
+
+- MUST NOT add platform-specific keys to core sections. Put them in that platform's section.
+- MUST NOT read another platform's section from a platform project.
+- MUST NOT branch on `SpicyTofu:Platform` outside the composition root and the resolver.
+- MUST NOT commit secrets. Use user secrets or environment variables.
+
 ## Constraints
 
 - MUST put anything identical on both platforms in the core.
