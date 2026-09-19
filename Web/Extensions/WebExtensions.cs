@@ -1,0 +1,31 @@
+using Domain.Runtime.Environment.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+
+namespace Web.Extensions;
+
+public static class WebExtensions
+{
+    public static IServiceCollection AddWebExtensions(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        return services.AddConfigProperties(configuration);
+    }
+
+    private static IServiceCollection AddConfigProperties(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<SpicyTofuConfig>(
+            configuration.GetSection("SpicyTofu"));
+
+        services.Configure<PlaywrightConfig>(
+            configuration.GetSection("Playwright"));
+
+        services.Configure<TestExecution>(
+            configuration.GetSection("TestExecution"));
+
+        return services;
+    }
+}
