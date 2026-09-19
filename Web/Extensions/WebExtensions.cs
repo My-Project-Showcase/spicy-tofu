@@ -10,7 +10,12 @@ public static class WebExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        return services.AddConfigProperties(configuration);
+        var merged = new ConfigurationBuilder()
+            .AddConfiguration(configuration)
+            .AddEnvironmentVariables("TOFU_")
+            .Build();
+
+        return services.AddConfigProperties(merged);
     }
 
     private static IServiceCollection AddConfigProperties(
