@@ -1,3 +1,10 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Web.Extensions;
 
-Console.WriteLine("Hello, World!");
+var host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices((context, services) =>
+    {
+        services.AddWebExtensions(context.Configuration);
+    })
+    .Build();
