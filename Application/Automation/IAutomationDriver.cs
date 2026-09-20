@@ -6,5 +6,6 @@ namespace Application.Automation;
 /// </summary>
 public interface IAutomationDriver
 {
-    //ToDo Add methods once the entities have taken shape
+    Task StartAsync();
+    Task StopAsync();
 }
