@@ -57,51 +57,132 @@ Each component library has its own locator class holding that library's locators
 2. Define the interface in the core first.
 3. Implement it in the web assembly, the mobile assembly, or both.
 4. Confirm the resolver picks up the new implementation.
+5. Write the documentation and update the changelog as described in the Documentation and Changelog sections.
 
 **Modifying existing code**
 1. Read the core interface and both platform implementations before changing any of them.
 2. Keep both implementations consistent with the interface contract.
+3. Update every documentation page the change makes stale, and update the changelog where the Changelog section requires it.
 
-## Project Wiki
+## Documentation
 
-Alongside the code, this repo keeps an LLM-maintained wiki: a set of interlinked markdown files that captures design decisions, component library notes, and platform knowledge. The agent writes and maintains it. Humans read it and steer it.
+Documentation lives in `docs/`. The agent writes and maintains it. Humans read it and steer it.
 
-The wiki is documentation, not a source of truth for behavior. If the wiki and the code disagree, the code wins, and the wiki page gets fixed.
+Documentation is not a source of truth for behavior. If the docs and the code disagree, the code wins, and the page gets fixed.
 
-### Layers
+### Layout
 
-1. **Raw sources** (`docs/raw/`): design notes, ADRs, component library docs, Playwright and Appium release notes, bug write-ups. Immutable. The agent reads them and never edits them.
-2. **Wiki** (`docs/wiki/`): agent-owned pages such as architecture, core interfaces, per-platform notes, per-component-library locator notes, and known issues. The agent creates and updates these.
-3. **Schema**: this file. It defines the conventions and workflows below.
+- `docs/technical/`: how the code works. Interfaces and contracts, classes and their responsibilities per layer, dependency injection wiring, configuration keys and how they bind, and how to build, run, or set up things (for example the Playwright browser install step).
+- `docs/wiki/`: the why and the wider knowledge. Design decisions and their reasoning, component library locator notes, per-platform notes (Playwright, Appium), and known issues.
+- `docs/README.md`: a brief overview of what the two folders contain and what they are used for, plus a table of contents of every page in them. Agents use it to find context on an implementation without opening every file.
+- `docs/wiki/index.md` and `docs/wiki/log.md`: see Wiki special files.
 
-Wiki work never touches source code, and code tasks never edit `docs/raw/`.
+### Reading docs
 
-### Special files
+When you need context on an implementation, read the table of contents in `docs/README.md` first, then open only the pages relevant to the area you are working on.
 
-- `docs/wiki/index.md`: a catalog of every page with a link and a one-line summary, grouped by category (architecture, platforms, component libraries, decisions, sources). Update it on every ingest. Read it first when answering a question.
-- `docs/wiki/log.md`: append-only history. Start each entry with `## [YYYY-MM-DD] operation | Title` (for example `## [2026-09-19] ingest | Appium 3 release notes`) so it can be scanned with `grep "^## \[" docs/wiki/log.md | tail -5`.
+### When docs must be written
 
-### Operations
+Any task that adds or changes behavior, structure, configuration, or an interface MUST update the documentation in the same task. A task is not complete until its documentation is written.
 
-**Ingest**: when a new source lands in `docs/raw/`:
-1. Read the source and summarize the key takeaways for the user.
-2. Add a summary page in the wiki.
-3. Update affected pages (interfaces, platform notes, locator notes) and flag anywhere the new source contradicts an existing claim.
-4. Update `index.md` and append to `log.md`.
+Changes with no effect on behavior, structure, configuration, or an interface (typo fixes, spelling corrections, formatting) do not need documenting.
 
-Ingest one source at a time unless told otherwise.
+### Choosing the folder
 
-**Query**: read `index.md`, open the relevant pages, and answer with references to the pages used. If the answer is worth keeping (a comparison, an analysis, a decision), offer to file it as a new wiki page.
+- Explains how something works or is wired: `docs/technical/`.
+- Explains why it was built that way, or records knowledge about a platform, component library, or issue: `docs/wiki/`.
+- The task involves both: write both.
+- Unsure which folder fits: stop and ask, and list the options.
 
-**Lint**: when asked, check for contradictions, stale claims, orphan pages, concepts mentioned without their own page, and missing cross-references. Report findings before making changes.
+Before creating a page, check the table of contents in `docs/README.md`. Update the existing page for that topic instead of creating a duplicate.
 
-### Wiki rules
+### README
 
-- MUST NOT edit anything under `docs/raw/`.
-- MUST keep `index.md` and `log.md` current with every wiki change.
-- MUST use relative links between wiki pages.
+`docs/README.md` MUST be updated every time a page in `docs/technical/` or `docs/wiki/` is created, edited, renamed, or deleted. No exceptions.
+
+It contains:
+
+1. An overview of what `docs/technical/` and `docs/wiki/` contain and what they are used for.
+2. A table of contents grouped by folder. Each entry has a relative link, a one-line summary, and the page's `updated` date.
+
+### Page rules
+
+- MUST add YAML frontmatter to every page in `docs/technical/` and `docs/wiki/` with `title`, `updated` (`YYYY-MM-DD`), and `sources` (the source files or pages the content is based on).
+- MUST use relative links between pages.
+- MUST name page files in lowercase kebab-case (for example `browser-host.md`). If a page already exists, keep its name.
 - MUST NOT record claims about framework behavior that the code or tests don't support. Mark unverified claims as such.
-- Add YAML frontmatter to each wiki page (`title`, `updated`, `sources`) so pages can be queried later.
+- MUST NOT document planned or unmerged work as if it exists.
+- MUST NOT use em dashes in any documentation file, README, changelog entry, or code comment. Use commas, colons, periods, or parentheses instead.
+
+### Wiki special files
+
+- `docs/wiki/index.md`: a catalog of every wiki page with a link and a one-line summary, grouped by category (architecture, platforms, component libraries, decisions, known issues). Update it on every wiki change.
+- `docs/wiki/log.md`: append-only history of wiki changes. Start each entry with `## [YYYY-MM-DD] operation | Title` so it can be scanned with `grep "^## \[" docs/wiki/log.md | tail -5`.
+
+### Wiki operations
+
+**Query**: read `docs/README.md`, open the relevant pages, and answer with references to the pages used. If the answer is worth keeping (a comparison, an analysis, a decision), offer to file it as a new page.
+
+**Lint**: when asked, check `docs/technical/` and `docs/wiki/` for contradictions, stale claims, orphan pages (pages missing from the README table of contents), concepts mentioned without their own page, and missing cross-references. Report findings before making changes.
+
+Query and lint tasks never touch source code.
+
+### When unsure
+
+Do not guess and do not add content that was not asked for. If a documentation decision is not covered here, stop and ask, and list the possible options.
+
+## Changelog
+
+`CHANGELOG.md` at the repo root records notable changes. It follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+### Structure
+
+The file opens with:
+
+```markdown
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+```
+
+Versions follow, newest first. A version that has not been released has no date and no compare link:
+
+```markdown
+## [X.Y.Z] - Unreleased
+
+### Added
+
+- Description of a big implementation
+  - Detail line when needed
+
+### Changed
+
+- Description of a small adjustment
+
+### Fixed
+
+- Description of a small fix
+```
+
+A released version has its compare link and release date:
+
+```markdown
+## [X.Y.Z](https://github.com/My-Project-Showcase/spicy-tofu/compare/vPREVIOUS...vX.Y.Z) - YYYY-MM-DD
+```
+
+### Rules
+
+- MUST update `CHANGELOG.md` only after a task is fully complete (code, build, tests, format check, and documentation). No entries for work in progress.
+- The version number lives in `Directory.Build.props`. Only the user changes it. MUST NOT edit or bump it. Every entry goes under the heading for that version.
+- If there is no heading for that version, create it as `## [X.Y.Z] - Unreleased` above the previous version. If the heading exists and has a release date, stop and ask. If the version cannot be read from `Directory.Build.props`, stop and ask.
+- Use only these sections: `Added`, `Changed`, `Fixed`. Include a section only when it has entries. There is no Contributors section. If a change does not fit these sections, stop and ask.
+- Big implementations (a new capability, for example the browser host) go under `Added`.
+- Small adjustments and fixes (for example updating parameters in a method for a specific implementation) go under `Changed` (modified behavior) or `Fixed` (corrected defects).
+- Changes with no effect on behavior, structure, configuration, or an interface (typo fixes, spelling corrections, formatting) get no entry.
+- Only when the user says a version is released: replace `Unreleased` with the release date and add the compare link. If there is no previous version to compare against, stop and ask which link to use.
+- MUST NOT use em dashes in changelog entries.
 
 ## Commands
 
@@ -113,7 +194,7 @@ dotnet format spicy-tofu.sln --verify-no-changes
 # mobile-only tests: none yet (no test projects; Mobile is a placeholder console app)
 ```
 
-Build, tests, and the format check must all pass before a task counts as done.
+Build, tests, and the format check must all pass before a task counts as done. The documentation, `docs/README.md`, and `CHANGELOG.md` must also be updated as the Documentation and Changelog sections require.
 
 ## Code style
 
@@ -128,5 +209,7 @@ Style is defined by `.editorconfig` and `Directory.Build.props` at the repo root
 - Solution and project layout: solution `spicy-tofu.sln` at the repo root; five projects in same-named top-level folders. `Domain`, `Application`, and `Infrastructure` form the core; `Web` and `Mobile` are the platform executables. `Web` references `Application`, `Domain`, and `Infrastructure`; `Mobile` references nothing yet. All projects target `net9.0` with `Nullable` and `ImplicitUsings` enabled.
 - Namespace and naming rules: namespaces mirror the project and folder path (`Domain.Runtime.Environment.Configuration`, `Web.Extensions`); use file-scoped namespaces and mark classes `sealed` unless they must be extended. Style and naming are enforced by `.editorconfig` and `Directory.Build.props` (enforced in build): 4-space indentation, Allman braces, `_camelCase` private/internal fields, `s_` static-field prefix, PascalCase constants, C# keywords over BCL types, usings outside the namespace, UTF-8 files.
 - Test data and config location: configuration in `Web/appsettings.json` (copied to output), overlaid by `TOFU_`-prefixed environment variables, bound to the `SpicyTofu`, `Playwright`, `TestExecution`, and `Projects` option classes in `Domain.Runtime.Environment.Configuration`. `Projects:RootDirectory` defaults to `./projects` for test-definition data (folder not created yet). No test projects exist yet; when added, record their location here.
+- Documentation location: `docs/technical/`, `docs/wiki/`, and `docs/README.md` (see Documentation).
+- Changelog location: `CHANGELOG.md` at the repo root. The current version is the version number in `Directory.Build.props` (see Changelog).
 - Reporting output location: not implemented yet; when reporting is added, record the output location here.
 - MUST keep this AGENTS.md up to date whenever commands, conventions, configuration, project structure, or other agent-relevant guidance change. New projects, test projects, reporting, or config locations must be recorded here.
