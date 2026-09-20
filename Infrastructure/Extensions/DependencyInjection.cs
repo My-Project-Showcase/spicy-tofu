@@ -1,4 +1,6 @@
+using Application.Automation.Mobile;
 using Application.Automation.Web;
+using Infrastructure.Automation.Mobile;
 using Infrastructure.Automation.Web;
 
 using Microsoft.Extensions.Configuration;
@@ -26,6 +28,21 @@ public static class DependencyInjection
 
         services.AddSingleton<BrowserHost>();
         services.AddScoped<IWebDriver, WebDriver>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddMobileAutomation(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        if (!string.Equals(configuration["SpicyTofu:Platform"], "Mobile", StringComparison.OrdinalIgnoreCase))
+        {
+            return services;
+        }
+
+        services.AddSingleton<MobileHost>();
+        services.AddScoped<IMobileDriver, MobileDriver>();
 
         return services;
     }

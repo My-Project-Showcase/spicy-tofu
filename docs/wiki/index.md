@@ -4,11 +4,11 @@ This is the index of every page in the wiki. It is grouped by category. The wiki
 
 ## Architecture
 
-- [Design Decisions](./design-decisions.md): why `IWebPage` keeps Playwright out of the core, why sessions are named, why the browser host is a semaphore-guarded singleton, and how platform-gated registration works.
+- [Design Decisions](./design-decisions.md): why `IWebPage` keeps Playwright out of the core, why sessions are named, why the browser host is a semaphore-guarded singleton, how platform-gated registration works, why mobile starts the Appium server and device implicitly with a reuse-and-own lifecycle, and why the mobile config class is `AppiumConfig`.
 
 ## Platforms
 
-- [Platform Notes](./platform-notes.md): per-platform knowledge for Playwright (web) and Appium (mobile), including browser install, config binding, and placeholder status.
+- [Platform Notes](./platform-notes.md): per-platform knowledge for Playwright (web) and Appium (mobile), including browser install, config binding, server and device launchers, and reuse semantics.
 
 ## Known Issues
 

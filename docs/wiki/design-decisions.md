@@ -6,9 +6,14 @@ sources:
   - ../technical/automation-driver-contract.md
   - ../technical/dependency-injection.md
   - ../technical/web-automation.md
+  - ../technical/mobile-automation.md
   - ../../Application/Automation/Web/IWebPage.cs
   - ../../Infrastructure/Automation/Web/BrowserHost.cs
   - ../../Infrastructure/Automation/Web/WebDriver.cs
+  - ../../Infrastructure/Automation/Mobile/MobileHost.cs
+  - ../../Infrastructure/Automation/Mobile/AppiumServerLauncher.cs
+  - ../../Infrastructure/Automation/Mobile/Devices/AndroidEmulatorLauncher.cs
+  - ../../Infrastructure/Automation/Mobile/Devices/IosSimulatorLauncher.cs
   - ../../Infrastructure/Extensions/DependencyInjection.cs
 ---
 
@@ -39,6 +44,18 @@ Sessions apply timeouts at start time from bound options. `WebDriver` receives `
 ## Empty infrastructure passthrough
 
 `AddInfrastructureDependencies` returns the collection unchanged. It exists so the web composition root has a stable call site for infrastructure services that have not been added yet. This is scaffolding, not behavior.
+
+## Implicit environment startup with reuse-and-own lifecycle
+
+Mobile automation needs a running Appium server and a booted device, which the user should not have to stand up manually. `MobileHost` starts both lazily on first session start, in the order server then device. Each launcher adopts the principle that what already runs is reused and only what the framework started is shut down: a pre-booted emulator or a manually started Appium server is left running, while a process this run created is killed on dispose. This keeps the cleanup predictable and avoids surprising the user by tearing down their own emulator.
+
+## Concrete host registration on both platforms
+
+`BrowserHost` and `MobileHost` are both registered as their concrete types with no abstraction in front of them. No second implementation of either exists, so an interface would be speculative. The difference between the platforms is in what each host owns: `BrowserHost` owns a browser, while `MobileHost` owns the server and device launchers.
+
+## AppiumConfig naming to avoid a namespace collision
+
+The mobile config class is `AppiumConfig`, not `Appium`. `Appium.WebDriver` exposes a top-level assembly namespace literally named `Appium`; a class with the same name becomes unresolvable in code that imports the client (CS0118). Naming the class `AppiumConfig` (matching the existing `PlaywrightConfig`) avoids the collision and keeps the JSON section `Appium` unchanged. See [Configuration](../technical/configuration.md).
 
 ## Unimplemented resolver
 

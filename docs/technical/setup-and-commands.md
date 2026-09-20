@@ -20,6 +20,7 @@ sources:
 
 - .NET SDK 9.0 (`net9.0` target).
 - For the web platform, Playwright browsers. The Playwright package places a `playwright.ps1` helper in the web project's output directory; it exists at `Web/bin/Debug/net9.0/playwright.ps1` after a build.
+- For the mobile platform, an Appium server executable. The default `AppiumServerExecutable` value is `appium`, resolved on `PATH`. `Appium.WebDriver` (8.3.2) brings the client; the server is a separate install (`npm install -g appium`). The machine running the tests also needs the Android SDK (`adb`, `emulator`) and an AVD configured under `Appium:AvdName`, or, on macOS, Xcode's `simctl` with an `Appium:IosSimulatorUdid`.
 
 ## Playwright browser install
 
@@ -28,6 +29,16 @@ sources:
 ```
 
 The helper script is produced by the `Microsoft.Playwright` NuGet package (1.62.0) and lives in the build output next to the web executable. This step is manual; no build target installs browsers automatically.
+
+## Appium and mobile device setup
+
+The mobile launchers expect the tooling to exist on the host:
+
+- The Appium server is started as a process whose executable comes from `AppiumServerExecutable` (default `appium`). It is found on `PATH`; no package installs it.
+- The Android emulator is started through the `emulator` tool from `Appium:AndroidSdkPath`, or failing that from the `ANDROID_HOME` environment variable, or from `PATH`. `adb` is resolved the same way. The AVD to boot comes from `Appium:AvdName`.
+- The iOS simulator is started through `xcrun simctl` and is only supported on macOS. See [Mobile Automation](./mobile-automation.md).
+
+Nothing here is installed by build or test; the server and the device are only started by the launchers on first session start at runtime.
 
 ## Build
 

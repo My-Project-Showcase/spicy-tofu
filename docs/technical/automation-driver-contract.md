@@ -8,6 +8,9 @@ sources:
   - ../../Application/Automation/Web/IWebPage.cs
   - ../../Application/Automation/Web/IWebSession.cs
   - ../../Application/Automation/Web/WebContextOptions.cs
+  - ../../Application/Automation/Mobile/IMobileDriver.cs
+  - ../../Application/Automation/Mobile/IMobileSession.cs
+  - ../../Application/Automation/Mobile/MobileContextOptions.cs
 ---
 
 # Automation Driver Contract
@@ -50,6 +53,29 @@ Note that `IWebDriver` does not inherit `IAutomationDriver`; it declares the sam
 
 `Application.Automation.Web.WebContextOptions`: a sealed record with a single property `string? BaseUrl`. Passed to `StartSessionAsync` for per-session context configuration. `WebDriver` maps it to Playwright's `BaseURL` when starting a browser context.
 
+## IMobileDriver
+
+`Application.Automation.Mobile.IMobileDriver` mirrors `IWebDriver`: it implements `IAsyncDisposable` and adds mobile-specific surface:
+
+- `Task StartAsync()`: start the `default` session.
+- `Task StopAsync()`: stop all sessions.
+- `Task<IMobileSession> StartSessionAsync(string name, MobileContextOptions? options = null)`: start a named session.
+- `IMobileSession GetSession(string name)`: return a running session or throw.
+
+Like `IWebDriver` it does not inherit `IAutomationDriver`; it declares `StartAsync` and `StopAsync` itself. There is no page property yet because mobile interaction surface is not defined.
+
+## IMobileSession
+
+`Application.Automation.Mobile.IMobileSession`:
+
+- `string Name`
+
+It does not expose a page or screen yet. The implementation wraps an Appium driver. Behavioral surface is not yet defined.
+
+## MobileContextOptions
+
+`Application.Automation.Mobile.MobileContextOptions`: a sealed record with no members. It exists so `StartSessionAsync` has a stable options parameter, mirroring `WebContextOptions`. There are no mobile per-session options yet.
+
 ## Resolver note
 
 AGENTS.md describes a "reflection-based resolver" that discovers platform implementations. No such type exists in the code today. Platform wiring is performed explicitly through `AddWebAutomation`. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
@@ -59,4 +85,5 @@ AGENTS.md describes a "reflection-based resolver" that discovers platform implem
 - [Architecture Overview](./architecture-overview.md)
 - [Dependency Injection](./dependency-injection.md)
 - [Web Automation](./web-automation.md)
+- [Mobile Automation](./mobile-automation.md)
 - [Design Decisions](../wiki/design-decisions.md)

@@ -3,5 +3,6 @@
         <AnalysisLevel>latest-recommended</AnalysisLevel>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+        <Version>0.1.0</Version>
     </PropertyGroup>
 </Project>

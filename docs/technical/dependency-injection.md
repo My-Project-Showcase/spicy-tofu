@@ -32,9 +32,24 @@ The host is built but never started by `Program.cs`; there is no `Run()` call. S
 
 `WebDriver` receives `IOptions<TestExecution>` and `IOptions<PlaywrightConfig>` through constructor injection and applies the timeouts at session start. See [Web Automation](./web-automation.md).
 
+## AddMobileAutomation
+
+`AddMobileAutomation` lives in `Infrastructure.Extensions.DependencyInjection`, next to `AddWebAutomation`. It checks `configuration["SpicyTofu:Platform"]` (case-insensitive) and returns the collection unchanged unless the value equals `Mobile`. When active it registers:
+
+- `MobileHost` singleton (the concrete type, as a singleton).
+- `IMobileDriver` scoped, implemented by `MobileDriver`.
+
+`MobileDriver` receives `IOptions<TestExecution>` and `IOptions<AppiumConfig>` through constructor injection and applies the command timeout at session start. See [Mobile Automation](./mobile-automation.md).
+
 ## Mobile entry point
 
-`Mobile/Program.cs` calls `AddMobileDependencies` (from `MobileExtensions`). That extension loads configuration, overlays `TOFU_` variables, and binds `SpicyTofuConfig`, `TestExecution`, and `Appium`. Note it binds the options twice (once in `AddConfigProperties` called directly, once through `AddEnvCompatibility`, which builds a merged configuration and re-binds), which is redundant but harmless. The host is never built in `Mobile/Program.cs`; the builder chain is created without `Build()`. See [Platform Notes](../wiki/platform-notes.md).
+`Mobile/Program.cs` builds the generic host and calls, in order:
+
+1. `AddMobileDependencies` (from `MobileExtensions`): loads configuration, overlays `TOFU_` variables, and binds `SpicyTofuConfig`, `TestExecution`, and `AppiumConfig`. Note it binds the options twice (once in `AddConfigProperties` called directly, once through `AddEnvCompatibility`, which builds a merged configuration and re-binds), which is redundant but harmless.
+2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): the same passthrough as the web entry point.
+3. `AddMobileAutomation` (from `Infrastructure.Extensions`): the mobile platform registration.
+
+The host is built but never started by `Program.cs`; there is no `Run()` call. Nothing starts the Appium server or an emulator during build or test; the launchers run only on first session start. See [Platform Notes](../wiki/platform-notes.md).
 
 ## Wiring summary
 
@@ -42,6 +57,8 @@ The host is built but never started by `Program.cs`; there is no `Run()` call. S
 |---|---|---|---|
 | `BrowserHost` | `AddWebAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `IWebDriver` / `WebDriver` | `AddWebAutomation` | scoped | `SpicyTofu:Platform` = `Web` |
+| `MobileHost` | `AddMobileAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
+| `IMobileDriver` / `MobileDriver` | `AddMobileAutomation` | scoped | `SpicyTofu:Platform` = `Mobile` |
 | Config option bindings | platform extension | - | always |
 
 ## Related pages
@@ -49,4 +66,5 @@ The host is built but never started by `Program.cs`; there is no `Run()` call. S
 - [Configuration](./configuration.md)
 - [Automation Driver Contract](./automation-driver-contract.md)
 - [Web Automation](./web-automation.md)
+- [Mobile Automation](./mobile-automation.md)
 - [Domain Layer](./domain-layer.md)

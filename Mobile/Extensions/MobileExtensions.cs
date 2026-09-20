@@ -28,7 +28,7 @@ public static class MobileExtensions
         service.Configure<TestExecution>(
             configuration.GetSection("TestExecution"));
 
-        service.Configure<Appium>(
+        service.Configure<AppiumConfig>(
             configuration.GetSection("Appium"));
     }
 

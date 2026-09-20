@@ -20,9 +20,9 @@ This page records observable gaps between the documented intent (AGENTS.md, olde
 
 ## Stale AGENTS.md claims
 
-- AGENTS.md describes a reflection-based resolver that discovers platform implementations. No such type exists; wiring is explicit in `AddWebAutomation`.
+- AGENTS.md describes a reflection-based resolver that discovers platform implementations. No such type exists; wiring is explicit in `AddWebAutomation` and `AddMobileAutomation`.
 - AGENTS.md says the platform implementation lives in the "Web project". The Playwright implementation actually lives in `Infrastructure.Automation.Web`.
-- AGENTS.md says "Mobile references nothing yet". `Mobile/Mobile.csproj` references `Domain`.
+- The `[0.1.0]` changelog added "Mobile now references `Infrastructure`", and AGENTS.md's Conventions section was updated to say both `Web` and `Mobile` reference `Application`, `Domain`, and `Infrastructure`. See [Architecture Overview](../technical/architecture-overview.md).
 
 ## Empty or unused code
 
@@ -37,12 +37,13 @@ This page records observable gaps between the documented intent (AGENTS.md, olde
 ## Hosts are built but never started
 
 - `Web/Program.cs` calls `Host.CreateDefaultBuilder(...).Build()` but never `Run()`.
-- `Mobile/Program.cs` ends with the builder chain; it never calls `Build()` at all.
+- `Mobile/Program.cs` calls `Build()` but never `Run()`.
+
+Neither executable starts a run. The launchers (`BrowserHost`, `MobileHost`) run lazily only when a session is requested at runtime.
 
 ## Configuration binding gaps
 
 - `Projects:RootDirectory` binds to nothing.
-- `Appium:PlatformVersion` in `Mobile/appsettings.json` has no matching property on the `Appium` class.
 - `SpicyTofuConfig.Environment` is initialized with `String.Empty` while `Platform` uses `string.Empty`; style-consistent initialization is absent.
 
 ## Naming and type oddities
@@ -54,7 +55,7 @@ This page records observable gaps between the documented intent (AGENTS.md, olde
 
 ## Format check
 
-`dotnet format spicy-tofu.sln --verify-no-changes` currently reports violations in source files (whitespace, final-newline, and using-ordering diagnostics across Domain, Application, Infrastructure, Web, and Mobile). Those files were not touched by the documentation task; the check fails on code written before it.
+`dotnet format spicy-tofu.sln --verify-no-changes` currently reports violations in source files (whitespace, final-newline, and using-ordering diagnostics across Domain, Application, Infrastructure, Web, and Mobile). The failing files were written before the documentation and mobile-automation tasks; those tasks introduced no new violations.
 
 ## What is deliberately not recorded
 

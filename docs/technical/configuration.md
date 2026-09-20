@@ -6,7 +6,7 @@ sources:
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
   - ../../Domain/Runtime/Environment/Configuration/Projects.cs
   - ../../Domain/Runtime/Environment/Configuration/PlaywrightConfig.cs
-  - ../../Domain/Runtime/Environment/Configuration/Appium.cs
+  - ../../Domain/Runtime/Environment/Configuration/AppiumConfig.cs
   - ../../Web/Extension/WebExtensions.cs
   - ../../Mobile/Extensions/MobileExtensions.cs
   - ../../Web/appsettings.json
@@ -38,17 +38,20 @@ Example values (identical across both files):
 
 The `PlaywrightConfig` class also has a `TimeOut` property that is not set by JSON and is not used by the framework.
 
-`Appium` is bound only by the mobile project (`Appium` class):
+`Appium` is bound only by the mobile project (`AppiumConfig` class):
 
 - `ServerUrl` = `http://127.0.0.1:4723`
 - `PlatformName` = `Android`
 - `AutomationName` = `UiAutomator2`
 - `DeviceName` = `Pixel_7_API_34`
+- `PlatformVersion` = `14`
 - `App` = `./apps/sample.apk`
+- `AvdName` = `` (empty; the user sets it to the AVD to boot)
+- `AndroidSdkPath` = `` (empty; falls back to the `ANDROID_HOME` environment variable)
+- `IosSimulatorUdid` = `` (empty; only needed on macOS)
+- `AppiumServerExecutable` = `appium` (default)
 - `NoReset` = `false`
 - `NewCommandTimeoutSec` = `120`
-
-`Mobile/appsettings.json` also carries `Appium:PlatformVersion` = `14`, but the `Appium` class has no `PlatformVersion` property, so that key binds to nothing.
 
 `Web/appsettings.json` also carries an `Appium` section for reference, but the web project never binds it.
 
@@ -59,7 +62,7 @@ The `PlaywrightConfig` class also has a `TimeOut` property that is not set by JS
 ## Where configuration is read
 
 - `WebExtensions.AddWebExtensions` binds `SpicyTofuConfig`, `TestExecution`, and `PlaywrightConfig`.
-- `MobileExtensions.AddConfigProperties` binds `SpicyTofuConfig`, `TestExecution`, and `Appium`.
+- `MobileExtensions.AddConfigProperties` binds `SpicyTofuConfig`, `TestExecution`, and `AppiumConfig`.
 
 Option classes live in `Domain.Runtime.Environment.Configuration` so both platforms share them.
 

@@ -13,7 +13,7 @@ sources:
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
   - ../../Domain/Runtime/Environment/Configuration/Projects.cs
   - ../../Domain/Runtime/Environment/Configuration/PlaywrightConfig.cs
-  - ../../Domain/Runtime/Environment/Configuration/Appium.cs
+  - ../../Domain/Runtime/Environment/Configuration/AppiumConfig.cs
 ---
 
 # Domain Layer
@@ -44,7 +44,7 @@ The `Domain.Runtime.Environment.Configuration` namespace holds one class per con
 - `TestExecution`: `Parallel` (bool), `Workers`, `Retries`, `DefaultTimeoutMs` (ints).
 - `Projects`: `internal sealed`, with `RootWebDirectory` and `RootMobileDirectory` strings.
 - `PlaywrightConfig`: `Browser`, `Headless` (bool), `TimeOut`, `NavigationTimeoutMs` (ints). `TimeOut` is unused; the framework reads `NavigationTimeoutMs`.
-- `Appium`: `ServerUrl`, `PlatformName`, `AutomationName`, `DeviceName`, `App` strings, `NoReset` (bool), `NewCommandTimeoutSec` (int). There is no `PlatformVersion` property, even though `Mobile/appsettings.json` contains an `Appium:PlatformVersion` key.
+- `AppiumConfig`: `ServerUrl`, `PlatformName`, `AutomationName`, `DeviceName`, `PlatformVersion`, `App`, `AvdName`, `AndroidSdkPath`, `IosSimulatorUdid` strings, `AppiumServerExecutable` (string, defaults to `appium`), `NoReset` (bool), `NewCommandTimeoutSec` (int). The class name differs from the `Appium` section it binds; the `Appium` name is avoided because the Appium client package exposes a top-level `Appium` namespace that would collide.
 
 `Domain.Runtime.Environment.TofuConfiguration` is a facade that surfaces `SpicyTofuConfig`, `PlaywrightConfig`, and `TestExecution`, but nothing binds or consumes it yet. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
 
