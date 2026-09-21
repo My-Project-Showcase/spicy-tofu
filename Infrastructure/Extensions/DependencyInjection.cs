@@ -1,7 +1,12 @@
 using Application.Automation.Mobile;
 using Application.Automation.Web;
+using Application.Runtime.JsonService;
+using Application.Runtime.RunService;
+
 using Infrastructure.Automation.Mobile;
 using Infrastructure.Automation.Web;
+using Infrastructure.Runtime.JsonService;
+using Infrastructure.Runtime.RunServices;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +19,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddServices(configuration);
         return services;
     }
 
@@ -45,5 +51,14 @@ public static class DependencyInjection
         services.AddScoped<IMobileDriver, MobileDriver>();
 
         return services;
+    }
+
+    public static IServiceCollection AddServices(
+        this IServiceCollection service,
+        IConfiguration configuration)
+    {
+        service.AddSingleton<IJsonService, JsonService>();
+        service.AddSingleton<IRunService, RunService>();
+        return service;
     }
 }
