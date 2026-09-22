@@ -1,6 +1,10 @@
 ﻿using Web.Extension;
+
+using Application.Runtime.RunService;
+
 using Infrastructure.Extensions;
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 
@@ -12,3 +16,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddWebAutomation(context.Configuration);
     })
     .Build();
+
+var runner = host.Services.GetRequiredService<IRunService>();
+
+await runner.RunAsync();

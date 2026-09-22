@@ -12,6 +12,9 @@ namespace Infrastructure.Runtime.JsonService;
 public class JsonService: IJsonService
 {
     private readonly IOptions<Projects> _projectsConfig;
+    
+    
+
 
     public JsonService(IOptions<Projects> projectsConfig)
     {
@@ -20,9 +23,16 @@ public class JsonService: IJsonService
 
     public async Task<Tuple<bool, List<Test>>> LoadJson()
     {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+        
         var directory = _projectsConfig.Value.RootDirectory;
+        Console.WriteLine($"Directory: {directory}");
         if (!Directory.Exists(directory))
         {
+            Console.WriteLine($"Directory {directory} does not exist");
             return Tuple.Create(false, new List<Test>());
         }
 
@@ -30,12 +40,11 @@ public class JsonService: IJsonService
 
         foreach (var testFile in Directory.EnumerateFiles(directory, "*.json"))
         {
-
             try
             {
                 var json = await File.ReadAllTextAsync(testFile);
 
-                var test = JsonSerializer.Deserialize<Test>(json);
+                var test = JsonSerializer.Deserialize<Test>(json, options);
 
                 if (test != null)
                 {
