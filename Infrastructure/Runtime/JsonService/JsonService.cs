@@ -1,20 +1,19 @@
+using System.Text.Json;
+
 using Application.Runtime.JsonService;
 
-using Domain.Runtime.Environment.Configuration;
 using Domain.Entities.TestCases;
+using Domain.Runtime.Environment.Configuration;
 
 using Microsoft.Extensions.Options;
 
-using System.Text.Json;
-
 namespace Infrastructure.Runtime.JsonService;
 
-public class JsonService: IJsonService
+public class JsonService : IJsonService
 {
     private readonly IOptions<Projects> _projectsConfig;
-    
-    
 
+    public event Action<List<Test>>? TestsLoaded;
 
     public JsonService(IOptions<Projects> projectsConfig)
     {
@@ -27,12 +26,10 @@ public class JsonService: IJsonService
         {
             PropertyNameCaseInsensitive = true
         };
-        
+
         var directory = _projectsConfig.Value.RootDirectory;
-        Console.WriteLine($"Directory: {directory}");
         if (!Directory.Exists(directory))
         {
-            Console.WriteLine($"Directory {directory} does not exist");
             return Tuple.Create(false, new List<Test>());
         }
 
@@ -50,10 +47,14 @@ public class JsonService: IJsonService
                 {
                     tests.Add(test);
                 }
-            }catch (JsonException){
+            }
+            catch (JsonException)
+            {
                 Console.WriteLine($"{testFile} was unable to load.");
             }
         }
+
+        TestsLoaded?.Invoke(tests);
 
         return Tuple.Create(true, tests);
     }

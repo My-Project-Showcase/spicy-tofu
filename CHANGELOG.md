@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `Mobile` now references `Infrastructure` and wires `AddMobileAutomation`, and `Mobile/Program.cs` builds the host.
 - Appium.WebDriver package (8.3.2) referenced by `Infrastructure` only.
 - Documentation: `docs/technical/` and `docs/wiki/` pages (including the new `docs/technical/mobile-automation.md`), the `docs/README.md` table of contents, and the wiki index and log.
+- Event-driven test loading pipeline: `IJsonService.TestsLoaded` raises after JSON deserialization with the loaded `List<Test>`, `TestsLoadedHandler` flattens the test hierarchy into `TestExecutionStep` records, and `RunService` subscribes inside `RunAsync`, converts through the handler, and runs the resulting steps.
 
 ### Fixed
 

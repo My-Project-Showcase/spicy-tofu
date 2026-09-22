@@ -1,6 +1,6 @@
 ---
 title: Known Issues and Discrepancies
-updated: 2026-09-20
+updated: 2026-09-22
 sources:
   - ../../AGENTS.md
   - ../../docs/README.md
@@ -9,7 +9,8 @@ sources:
   - ../../Domain/Runtime/Environment/TofuConfiguration.cs
   - ../../Domain/Runtime/Environment/Configuration/Projects.cs
   - ../../Application/Locators/LocatorStrategy.cs
-  - ../../Domain/Class1.cs
+  - ../../Infrastructure/Runtime/JsonService/JsonService.cs
+  - ../../Infrastructure/Runtime/RunService/RunService.cs
   - ../technical/architecture-overview.md
   - ../technical/configuration.md
 ---
@@ -26,24 +27,23 @@ This page records observable gaps between the documented intent (AGENTS.md, olde
 
 ## Empty or unused code
 
-- `Domain/Class1.cs` is an empty file.
 - `Domain.Runtime.Environment.TofuConfiguration` is never bound or consumed.
 - `Application.Locators.LocatorStrategy` is an empty record, unused by any driver.
-- `Projects` (internal) is never bound; its properties (`RootWebDirectory`, `RootMobileDirectory`) do not match the `Projects:RootDirectory` key in `appsettings.json`.
+- `Projects` (public) is bound and consumed only by the web project through `JsonService`, which reads `RootDirectory`. The mobile project never binds or consumes it.
 - `PlaywrightConfig.TimeOut` is unused; the framework reads `NavigationTimeoutMs`.
 - `docs/README.md` was an empty placeholder; this task filled it.
 - `CHANGELOG.md` was an empty placeholder; this task filled it.
 
 ## Hosts are built but never started
 
-- `Web/Program.cs` calls `Host.CreateDefaultBuilder(...).Build()` but never `Run()`.
-- `Mobile/Program.cs` calls `Build()` but never `Run()`.
+- `Web/Program.cs` resolves `IRunService` and calls `RunAsync()`, which loads test JSON and prints the flattened steps. It does not start a browser yet.
+- `Mobile/Program.cs` calls `Build()` but never `Run()` and never calls `RunAsync()`.
 
-Neither executable starts a run. The launchers (`BrowserHost`, `MobileHost`) run lazily only when a session is requested at runtime.
+The platform hosts (`BrowserHost`, `MobileHost`) still run lazily only when a session is requested at runtime.
 
 ## Configuration binding gaps
 
-- `Projects:RootDirectory` binds to nothing.
+- `Projects:RootDirectory` binds on the web project only; the mobile project leaves `Projects` unbound.
 - `SpicyTofuConfig.Environment` is initialized with `String.Empty` while `Platform` uses `string.Empty`; style-consistent initialization is absent.
 
 ## Naming and type oddities
@@ -55,7 +55,7 @@ Neither executable starts a run. The launchers (`BrowserHost`, `MobileHost`) run
 
 ## Format check
 
-`dotnet format spicy-tofu.sln --verify-no-changes` currently reports violations in source files (whitespace, final-newline, and using-ordering diagnostics across Domain, Application, Infrastructure, Web, and Mobile). The failing files were written before the documentation and mobile-automation tasks; those tasks introduced no new violations.
+`dotnet format spicy-tofu.sln --verify-no-changes` still reports violations in source files (whitespace, final-newline, and using-ordering diagnostics across Application, Domain, Infrastructure, Mobile, and Web). The runtime-pipeline files (`JsonService`, `RunService`, `TestsLoadedHandler`, `TestExecutionStep`, `IJsonService`) are clean; the remaining failures are all in files written before the web runner and runtime-pipeline work.
 
 ## What is deliberately not recorded
 

@@ -1,42 +1,51 @@
-using Application.Runtime.RunService;
 using Application.Runtime.JsonService;
+using Application.Runtime.RunService;
+
 using Domain.Entities.TestCases;
+
+using Infrastructure.Runtime.TestExecution;
 
 namespace Infrastructure.Runtime.RunServices;
 
-public class RunService: IRunService
+public class RunService : IRunService
 {
     private readonly IJsonService _jsonService;
+    private readonly TestsLoadedHandler _testsLoadedHandler;
 
-    public RunService(IJsonService jsonService)
+    public RunService(IJsonService jsonService, TestsLoadedHandler testsLoadedHandler)
     {
         _jsonService = jsonService;
+        _testsLoadedHandler = testsLoadedHandler;
     }
-    
+
     public async Task RunAsync()
     {
-        var testResult = await _jsonService.LoadJson();
+        _jsonService.TestsLoaded += OnTestsLoaded;
 
-        if (!testResult.Item1){
-            Console.WriteLine("Oops! Something went wrong");
-        }
-
-        var testList = testResult.Item2;
-        var steps = testList
-            .SelectMany(test => test.Workflows
-                .SelectMany(workflow => workflow.Steps
-                    .Select(step => new
-                    {
-                        Test = test,
-                        Workflow = workflow,
-                        Step = step
-                    })));
-        
-        foreach (var item in steps)
+        try
         {
-            Console.WriteLine($"Test: {item.Test.Name}");
-            Console.WriteLine($"Workflow: {item.Workflow.Name}");
-            Console.WriteLine($"Step: {item.Step.Type}");
+            var testResult = await _jsonService.LoadJson();
+
+            if (!testResult.Item1)
+            {
+                Console.WriteLine("Oops! Something went wrong");
+            }
+        }
+        finally
+        {
+            _jsonService.TestsLoaded -= OnTestsLoaded;
+        }
+    }
+
+    private void OnTestsLoaded(List<Test> tests)
+    {
+        var steps = _testsLoadedHandler.Flatten(tests);
+
+        foreach (var step in steps)
+        {
+            Console.WriteLine($"Test: {step.Test.Name}");
+            Console.WriteLine($"Workflow: {step.Workflow.Name}");
+            Console.WriteLine($"Step: {step.Step.Type}");
         }
     }
 }

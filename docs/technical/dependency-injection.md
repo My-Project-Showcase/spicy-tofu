@@ -1,6 +1,6 @@
 ---
 title: Dependency Injection
-updated: 2026-09-20
+updated: 2026-09-22
 sources:
   - ../../Infrastructure/Extensions/DependencyInjection.cs
   - ../../Web/Extension/WebExtensions.cs
@@ -17,11 +17,11 @@ The web and mobile executables are the composition roots. Both read configuratio
 
 `Web/Program.cs` builds the generic host and calls, in order:
 
-1. `AddWebExtensions` (from `WebExtensions`): loads `appsettings.json`, overlays `TOFU_`-prefixed environment variables, binds `SpicyTofuConfig`, `TestExecution`, and `PlaywrightConfig`.
-2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): a passthrough that currently returns `IServiceCollection` unchanged. It exists so the composition root has a single place to pull in infrastructure services later.
+1. `AddWebExtensions` (from `WebExtensions`): loads `appsettings.json`, overlays `TOFU_`-prefixed environment variables, binds `SpicyTofuConfig`, `Projects`, `PlaywrightConfig`, and `TestExecution`.
+2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which registers the runtime services `IJsonService` (`JsonService`), `IRunService` (`RunService`), and `TestsLoadedHandler`, all singletons.
 3. `AddWebAutomation` (from `Infrastructure.Extensions`): the web platform registration.
 
-The host is built but never started by `Program.cs`; there is no `Run()` call. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
+`Program.cs` resolves `IRunService` from the container and calls `RunAsync()`, which drives the runtime pipeline. See [Runtime Pipeline](./runtime-pipeline.md).
 
 ## AddWebAutomation
 
@@ -55,6 +55,9 @@ The host is built but never started by `Program.cs`; there is no `Run()` call. N
 
 | Registration | Definition | Lifetime | Gate |
 |---|---|---|---|
+| `IJsonService` / `JsonService` | `AddServices` | singleton | always |
+| `IRunService` / `RunService` | `AddServices` | singleton | always |
+| `TestsLoadedHandler` | `AddServices` | singleton | always |
 | `BrowserHost` | `AddWebAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `IWebDriver` / `WebDriver` | `AddWebAutomation` | scoped | `SpicyTofu:Platform` = `Web` |
 | `MobileHost` | `AddMobileAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |

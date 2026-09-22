@@ -12,7 +12,7 @@ This is the index of every page in the wiki. It is grouped by category. The wiki
 
 ## Known Issues
 
-- [Known Issues and Discrepancies](./known-issues-and-discrepancies.md): stale AGENTS.md claims, empty or unused code, hosts that never start, configuration binding gaps, naming oddities, and the format check result.
+- [Known Issues and Discrepancies](./known-issues-and-discrepancies.md): stale AGENTS.md claims, empty or unused code, the mobile host that never starts, configuration binding gaps, naming oddities, and the format check result.
 
 ## Related
 

@@ -1,6 +1,6 @@
 ---
 title: Domain Layer
-updated: 2026-09-20
+updated: 2026-09-22
 sources:
   - ../../Domain/Domain.csproj
   - ../../Domain/Shared/AggregateRoot.cs
@@ -8,6 +8,7 @@ sources:
   - ../../Domain/Entities/TestCases/Test.cs
   - ../../Domain/Entities/TestCases/Workflow.cs
   - ../../Domain/Entities/TestCases/TestStep.cs
+  - ../../Domain/Entities/Execution/TestExecutionStep.cs
   - ../../Domain/Runtime/Environment/TofuConfiguration.cs
   - ../../Domain/Runtime/Environment/Configuration/SpicyTofuConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
@@ -32,9 +33,8 @@ The `Domain` project models the framework's own domain. It does not model the bu
 
 - `Domain.Entities.TestCases.Test`: inherits `AggregrateRoot`. Re-declares `Id` and `Name` (strings) and adds `Workflows` (`List<Workflow>`). Re-declaring `Id` and `Name` hides the base members, which produces `CS0108` compiler warnings when `TreatWarningsAsErrors` is off (Debug builds).
 - `Domain.Entities.TestCases.Workflow`: holds `Id`, `Name`, and `Steps` (`List<TestSteps>`).
-- `Domain.Entities.TestCases.TestSteps`: note the file `TestStep.cs` contains a class named `TestSteps`, not `TestStep`. It holds `Type`, `Attribute`, `Target`, and `Value` strings. None of these are processed by the framework yet.
-
-`Domain/Class1.cs` exists and is empty.
+- `Domain.Entities.TestCases.TestSteps`: note the file `TestStep.cs` contains a class named `TestSteps`, not `TestStep`. It holds `Type`, `Attribute`, `Target`, and `Value` strings. They are flattened into execution steps by the runtime pipeline, but no action executes them yet.
+- `Domain.Entities.Execution.TestExecutionStep`: a record composing a `Test`, a `Workflow`, and a `TestSteps` instance. It is the execution representation produced when the loaded test hierarchy is flattened. See [Runtime Pipeline](./runtime-pipeline.md).
 
 ## Configuration option classes
 
@@ -42,7 +42,7 @@ The `Domain.Runtime.Environment.Configuration` namespace holds one class per con
 
 - `SpicyTofuConfig`: `Environment`, `Platform` strings. Note `Environment` is initialized with `String.Empty` while `Platform` uses `string.Empty`.
 - `TestExecution`: `Parallel` (bool), `Workers`, `Retries`, `DefaultTimeoutMs` (ints).
-- `Projects`: `internal sealed`, with `RootWebDirectory` and `RootMobileDirectory` strings.
+- `Projects`: `public sealed`, with a single `RootDirectory` string. The web project binds it and `JsonService` reads it.
 - `PlaywrightConfig`: `Browser`, `Headless` (bool), `TimeOut`, `NavigationTimeoutMs` (ints). `TimeOut` is unused; the framework reads `NavigationTimeoutMs`.
 - `AppiumConfig`: `ServerUrl`, `PlatformName`, `AutomationName`, `DeviceName`, `PlatformVersion`, `App`, `AvdName`, `AndroidSdkPath`, `IosSimulatorUdid` strings, `AppiumServerExecutable` (string, defaults to `appium`), `NoReset` (bool), `NewCommandTimeoutSec` (int). The class name differs from the `Appium` section it binds; the `Appium` name is avoided because the Appium client package exposes a top-level `Appium` namespace that would collide.
 

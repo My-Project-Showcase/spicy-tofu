@@ -7,6 +7,7 @@ using Infrastructure.Automation.Mobile;
 using Infrastructure.Automation.Web;
 using Infrastructure.Runtime.JsonService;
 using Infrastructure.Runtime.RunServices;
+using Infrastructure.Runtime.TestExecution;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,6 +59,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         service.AddSingleton<IJsonService, JsonService>();
+        service.AddSingleton<TestsLoadedHandler>();
         service.AddSingleton<IRunService, RunService>();
         return service;
     }

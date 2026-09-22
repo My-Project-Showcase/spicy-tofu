@@ -1,6 +1,6 @@
 ---
 title: Configuration
-updated: 2026-09-20
+updated: 2026-09-22
 sources:
   - ../../Domain/Runtime/Environment/Configuration/SpicyTofuConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
@@ -26,7 +26,7 @@ Example values (identical across both files):
 - `SpicyTofu:Environment` = `Development`; `SpicyTofu:Platform` differs: `Web` in the web file, `Mobile` in the mobile file.
 - `TestExecution:Workers` = `1`, `Retries` = `0`, `DefaultTimeoutMs` = `30000`. The `TestExecution` class also has a `Parallel` flag that the JSON files do not set.
 
-`Projects` is a core section in both JSON files (`Projects:RootDirectory` = `./projects`) but no option class is bound for it. The internal `Projects` class exposes `RootWebDirectory` and `RootMobileDirectory`, which do not match the JSON key. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
+`Projects` is a core section in both JSON files. The web project binds it to the `Projects` option class, and `Projects:RootDirectory` (`D:\Projects\QA\Spicy-Tofu` in `Web/appsettings.json`) points at the folder holding the test-definition JSON files. The mobile project does not bind it; `Mobile/appsettings.json` keeps the default `./projects` value, which the mobile project never reads. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
 
 ## Platform sections
 
@@ -61,7 +61,7 @@ The `PlaywrightConfig` class also has a `TimeOut` property that is not set by JS
 
 ## Where configuration is read
 
-- `WebExtensions.AddWebExtensions` binds `SpicyTofuConfig`, `TestExecution`, and `PlaywrightConfig`.
+- `WebExtensions.AddWebExtensions` binds `SpicyTofuConfig`, `Projects`, `PlaywrightConfig`, and `TestExecution`.
 - `MobileExtensions.AddConfigProperties` binds `SpicyTofuConfig`, `TestExecution`, and `AppiumConfig`.
 
 Option classes live in `Domain.Runtime.Environment.Configuration` so both platforms share them.

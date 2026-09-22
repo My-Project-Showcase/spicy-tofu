@@ -1,3 +1,7 @@
+## [2026-09-22] update | Event-driven runtime pipeline
+
+- Updated `known-issues-and-discrepancies.md`: the web host now starts a run through `RunAsync`, `Projects` is bound on the web project only, and the runtime-pipeline files are format-clean.
+
 ## [2026-09-20] add | Docs backfill
 
 - Created `docs/technical/` and `docs/wiki/` pages covering architecture, domain layer, configuration, dependency injection, the automation driver contract, web automation, setup commands, design decisions, platform notes, and known issues.

@@ -29,7 +29,7 @@ Platform implementations are discovered and wired by the reflection-based resolv
 
 Settings live in `appsettings.json`, split by owner:
 
-- Core sections (`SpicyTofu`, `Projects`, `TestExecution`) are platform-neutral and bound by the core.
+- Core sections (`SpicyTofu`, `Projects`, `TestExecution`) are platform-neutral. `SpicyTofu` and `TestExecution` are bound by both platforms; `Projects` is bound by the web project only.
 - `Playwright` is read only by the web project. `Appium` is read only by the mobile project.
 
 - MUST NOT add platform-specific keys to core sections. Put them in that platform's section.
@@ -208,7 +208,8 @@ Style is defined by `.editorconfig` and `Directory.Build.props` at the repo root
 
 - Solution and project layout: solution `spicy-tofu.sln` at the repo root; five projects in same-named top-level folders. `Domain`, `Application`, and `Infrastructure` form the core; `Web` and `Mobile` are the platform executables. Both `Web` and `Mobile` reference `Application`, `Domain`, and `Infrastructure`. All projects target `net9.0` with `Nullable` and `ImplicitUsings` enabled.
 - Namespace and naming rules: namespaces mirror the project and folder path (`Domain.Runtime.Environment.Configuration`, `Web.Extensions`); use file-scoped namespaces and mark classes `sealed` unless they must be extended. Style and naming are enforced by `.editorconfig` and `Directory.Build.props` (enforced in build): 4-space indentation, Allman braces, `_camelCase` private/internal fields, `s_` static-field prefix, PascalCase constants, C# keywords over BCL types, usings outside the namespace, UTF-8 files.
-- Test data and config location: configuration in `Web/appsettings.json` and `Mobile/appsettings.json` (copied to output), overlaid by `TOFU_`-prefixed environment variables, bound to the `SpicyTofu`, `Playwright`, `Appium`, `TestExecution`, and `Projects` option classes in `Domain.Runtime.Environment.Configuration`. `Projects:RootDirectory` defaults to `./projects` for test-definition data (folder not created yet). No test projects exist yet; when added, record their location here.
+- Test data and config location: configuration in `Web/appsettings.json` and `Mobile/appsettings.json` (copied to output), overlaid by `TOFU_`-prefixed environment variables, bound to the `SpicyTofu`, `Playwright`, `Appium`, `TestExecution`, and `Projects` option classes in `Domain.Runtime.Environment.Configuration`. `Projects:RootDirectory` is set in `Web/appsettings.json` and points at the test-definition data folder; the mobile project keeps the default `./projects` value and never reads it. No test projects exist yet; when added, record their location here.
+- Runtime pipeline: `JsonService` loads the test JSON and raises the `IJsonService.TestsLoaded` application event with the loaded `List<Test>`; `TestsLoadedHandler.Flatten` converts that list into `IEnumerable<TestExecutionStep>`; `RunService.RunAsync` subscribes to the event, converts through the handler, and executes the steps. The web entry point drives it via `RunAsync`; the mobile entry point does not start a run yet. See `docs/technical/runtime-pipeline.md`.
 - Documentation location: `docs/technical/`, `docs/wiki/`, and `docs/README.md` (see Documentation).
 - Changelog location: `CHANGELOG.md` at the repo root. The current version is the version number in `Directory.Build.props` (see Changelog).
 - Reporting output location: not implemented yet; when reporting is added, record the output location here.
