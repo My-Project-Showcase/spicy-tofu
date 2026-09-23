@@ -1,3 +1,13 @@
+## [2026-09-23] update | Driver lifecycle wiring
+
+- Added the single `AddAutomation` composition point in `Infrastructure.Extensions`: reads `SpicyTofu:Platform` once, registers exactly one platform, throws on a missing or unknown value.
+- `IWebDriver` and `IMobileDriver` now inherit `IAutomationDriver` and `IAsyncDisposable`; the duplicated `StartAsync`/`StopAsync` declarations are gone.
+- `RunService` owns the driver lifecycle: `StartAsync` before loading tests, `StopAsync` in a `finally`. Both `Web/Program.cs` and `Mobile/Program.cs` resolve `IRunService` and call `RunAsync()`, and dispose the host with `using IHost host`.
+- Mobile now binds `Projects` through `MobileExtensions.AddConfigProperties`.
+- Rewrote `docs/technical/dependency-injection.md` (AddAutomation, singleton forwards, host disposal). Updated `automation-driver-contract.md` (inheritance, platform wiring), `runtime-pipeline.md` (start/stop around the load), `web-automation.md` and `mobile-automation.md` (singleton drivers, DI section), and `configuration.md` (mobile Projects binding, Platform read location).
+- Updated `docs/wiki/design-decisions.md` (single composition point, driver lifecycle ownership), `platform-notes.md` (entry point flow, mobile Projects), and `known-issues-and-discrepancies.md` (resolver and never-started-hosts entries resolved).
+- Updated `AGENTS.md` (resolver references replaced by `AddAutomation`) and `docs/README.md` (TOC summaries and dates).
+
 ## [2026-09-23] update | Execution-oriented logging
 
 - Rewrote `docs/technical/logging.md` around the execution-oriented API: `ActionStarted`, `LocatorResolution`, `ActionCompleted`, and `ActionFailed`, with `TestExecutionStep` passed directly and `LocatorCandidate(string Strategy, string Value)` as the locator handoff.

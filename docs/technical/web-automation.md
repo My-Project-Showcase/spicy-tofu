@@ -1,6 +1,6 @@
 ---
 title: Web Automation
-updated: 2026-09-20
+updated: 2026-09-23
 sources:
   - ../../Infrastructure/Automation/Web/BrowserHost.cs
   - ../../Infrastructure/Automation/Web/WebDriver.cs
@@ -27,7 +27,7 @@ There is no `IBrowserHost` interface; DI registers the concrete `BrowserHost`.
 
 ## WebDriver
 
-`WebDriver` is registered as scoped and implements `IWebDriver`.
+`WebDriver` is registered as a singleton (as `WebDriver`, `IWebDriver`, and `IAutomationDriver`, all resolving to the same instance) and implements `IWebDriver`.
 
 - Holds a `ConcurrentDictionary<string, BrowserSession>` keyed by session name. The default session name is the constant `"default"`.
 - `StartAsync` starts the `default` session via `StartSessionAsync("default")`.
@@ -55,10 +55,11 @@ There is no `IBrowserHost` interface; DI registers the concrete `BrowserHost`.
 | Action | Component | Behavior |
 |---|---|---|
 | First page access | `BrowserHost` | lazily launches Playwright browser |
-| `StartAsync` | `WebDriver` | starts the `default` session |
+| `StartAsync` | `RunService` via `IAutomationDriver` | starts the `default` session |
 | `StartSessionAsync(name, ...)` | `WebDriver` | opens context and registers `BrowserSession` |
 | `Page` | `WebDriver` | `GetSession("default").Page` |
-| `StopAsync` / dispose | `WebDriver` | closes every registered context |
+| `StopAsync` / dispose | `RunService` via `IAutomationDriver` | closes every registered context |
+| Host dispose | `BrowserHost` | closes the browser and Playwright |
 
 ## Related pages
 

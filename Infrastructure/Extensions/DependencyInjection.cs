@@ -1,3 +1,4 @@
+using Application.Automation;
 using Application.Automation.Mobile;
 using Application.Automation.Web;
 using Application.Logging;
@@ -28,32 +29,31 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddWebAutomation(
+    public static IServiceCollection AddAutomation(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        if (!string.Equals(configuration["SpicyTofu:Platform"], "Web", StringComparison.OrdinalIgnoreCase))
+        var platform = configuration["SpicyTofu:Platform"];
+
+        if (string.Equals(platform, "Web", StringComparison.OrdinalIgnoreCase))
         {
-            return services;
+            services.AddSingleton<BrowserHost>();
+            services.AddSingleton<WebDriver>();
+            services.AddSingleton<IWebDriver>(sp => sp.GetRequiredService<WebDriver>());
+            services.AddSingleton<IAutomationDriver>(sp => sp.GetRequiredService<WebDriver>());
         }
-
-        services.AddSingleton<BrowserHost>();
-        services.AddScoped<IWebDriver, WebDriver>();
-
-        return services;
-    }
-
-    public static IServiceCollection AddMobileAutomation(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        if (!string.Equals(configuration["SpicyTofu:Platform"], "Mobile", StringComparison.OrdinalIgnoreCase))
+        else if (string.Equals(platform, "Mobile", StringComparison.OrdinalIgnoreCase))
         {
-            return services;
+            services.AddSingleton<MobileHost>();
+            services.AddSingleton<MobileDriver>();
+            services.AddSingleton<IMobileDriver>(sp => sp.GetRequiredService<MobileDriver>());
+            services.AddSingleton<IAutomationDriver>(sp => sp.GetRequiredService<MobileDriver>());
         }
-
-        services.AddSingleton<MobileHost>();
-        services.AddScoped<IMobileDriver, MobileDriver>();
+        else
+        {
+            throw new InvalidOperationException(
+                $"Unknown or missing SpicyTofu:Platform '{platform ?? "<missing>"}'. Set it to 'Web' or 'Mobile'.");
+        }
 
         return services;
     }

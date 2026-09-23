@@ -1,12 +1,8 @@
 namespace Application.Automation.Web;
 
-public interface IWebDriver : IAsyncDisposable
+public interface IWebDriver : IAutomationDriver, IAsyncDisposable
 {
     IWebPage Page { get; }
-
-    Task StartAsync();
-
-    Task StopAsync();
 
     Task<IWebSession> StartSessionAsync(string name, WebContextOptions? options = null);
 
