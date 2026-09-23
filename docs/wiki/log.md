@@ -1,4 +1,14 @@
-## [2026-09-22] update | Event-driven runtime pipeline
+## [2026-09-23] update | Execution-oriented logging
+
+- Rewrote `docs/technical/logging.md` around the execution-oriented API: `ActionStarted`, `LocatorResolution`, `ActionCompleted`, and `ActionFailed`, with `TestExecutionStep` passed directly and `LocatorCandidate(string Strategy, string Value)` as the locator handoff.
+- Updated `known-issues-and-discrepancies.md`: the empty `LocatorStrategy` record and the "unused OutputModeDetector" note are gone, and the logging files are format-clean.
+
+## [2026-09-23] update | Logging in place
+
+- Added `docs/technical/logging.md` covering `ILogger`, `LogEntry`, the `IPrintStrategy` seam, `ConsolePrintStrategy` formatting, and the `Logging` configuration section.
+- Updated `known-issues-and-discrepancies.md`: the logging files are format-clean, `OutputModeDetector` is a seam nothing consumes yet, and `ILogger.Error` carries a tolerated `CA1716` warning.
+
+## [2026-09-23] update | Event-driven runtime pipeline
 
 - Updated `known-issues-and-discrepancies.md`: the web host now starts a run through `RunAsync`, `Projects` is bound on the web project only, and the runtime-pipeline files are format-clean.
 

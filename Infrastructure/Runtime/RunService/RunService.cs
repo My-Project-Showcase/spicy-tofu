@@ -1,3 +1,4 @@
+using Application.Logging;
 using Application.Runtime.JsonService;
 using Application.Runtime.RunService;
 
@@ -10,16 +11,21 @@ namespace Infrastructure.Runtime.RunServices;
 public class RunService : IRunService
 {
     private readonly IJsonService _jsonService;
+    private readonly ILogger _logger;
     private readonly TestsLoadedHandler _testsLoadedHandler;
 
-    public RunService(IJsonService jsonService, TestsLoadedHandler testsLoadedHandler)
+    public RunService(IJsonService jsonService, ILogger logger, TestsLoadedHandler testsLoadedHandler)
     {
         _jsonService = jsonService;
+        _logger = logger;
         _testsLoadedHandler = testsLoadedHandler;
     }
 
     public async Task RunAsync()
     {
+        _logger.Section("Test Execution");
+        _logger.Info("Loading tests.");
+
         _jsonService.TestsLoaded += OnTestsLoaded;
 
         try
@@ -28,7 +34,7 @@ public class RunService : IRunService
 
             if (!testResult.Item1)
             {
-                Console.WriteLine("Oops! Something went wrong");
+                _logger.Warning("The test directory could not be loaded.");
             }
         }
         finally
@@ -43,9 +49,7 @@ public class RunService : IRunService
 
         foreach (var step in steps)
         {
-            Console.WriteLine($"Test: {step.Test.Name}");
-            Console.WriteLine($"Workflow: {step.Workflow.Name}");
-            Console.WriteLine($"Step: {step.Step.Type}");
+            _logger.ActionStarted(step);
         }
     }
 }

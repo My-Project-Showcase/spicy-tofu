@@ -1,6 +1,6 @@
 ---
 title: Runtime Pipeline
-updated: 2026-09-22
+updated: 2026-09-23
 sources:
   - ../../Application/Runtime/JsonService/IJsonService.cs
   - ../../Application/Runtime/RunService/IRunService.cs
@@ -37,14 +37,15 @@ The subscriber, `RunService.OnTestsLoaded`, receives the tests, calls `TestsLoad
   ```
 
 - `TestExecutionStep`: a record in `Domain.Entities.Execution` holding the `Test`, `Workflow`, and `TestSteps` instance produced by the flatten.
-- `RunService`: subscribes inside `RunAsync`, converts through the handler, and runs the steps. The current run step is placeholder `Console` output.
+- `RunService`: subscribes inside `RunAsync`, converts through the handler, and runs the steps. Each flattened step is reported with `ILogger.ActionStarted(step)`. See [Logging](./logging.md).
 
 ## Registration
 
-`AddServices` in `Infrastructure.Extensions.DependencyInjection` registers `IJsonService` (`JsonService`), `IRunService` (`RunService`), and `TestsLoadedHandler`, all singletons.
+`AddServices` in `Infrastructure.Extensions.DependencyInjection` registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), and `TestsLoadedHandler`.
 
 ## Related pages
 
 - [Domain Layer](./domain-layer.md)
 - [Dependency Injection](./dependency-injection.md)
 - [Configuration](./configuration.md)
+- [Logging](./logging.md)

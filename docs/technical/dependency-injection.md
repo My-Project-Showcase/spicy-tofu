@@ -1,6 +1,6 @@
 ---
 title: Dependency Injection
-updated: 2026-09-22
+updated: 2026-09-23
 sources:
   - ../../Infrastructure/Extensions/DependencyInjection.cs
   - ../../Web/Extension/WebExtensions.cs
@@ -18,7 +18,7 @@ The web and mobile executables are the composition roots. Both read configuratio
 `Web/Program.cs` builds the generic host and calls, in order:
 
 1. `AddWebExtensions` (from `WebExtensions`): loads `appsettings.json`, overlays `TOFU_`-prefixed environment variables, binds `SpicyTofuConfig`, `Projects`, `PlaywrightConfig`, and `TestExecution`.
-2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which registers the runtime services `IJsonService` (`JsonService`), `IRunService` (`RunService`), and `TestsLoadedHandler`, all singletons.
+2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which binds the `Logging` section and registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), and `TestsLoadedHandler`.
 3. `AddWebAutomation` (from `Infrastructure.Extensions`): the web platform registration.
 
 `Program.cs` resolves `IRunService` from the container and calls `RunAsync()`, which drives the runtime pipeline. See [Runtime Pipeline](./runtime-pipeline.md).
@@ -55,6 +55,8 @@ The host is built but never started by `Program.cs`; there is no `Run()` call. N
 
 | Registration | Definition | Lifetime | Gate |
 |---|---|---|---|
+| `ILogger` / `Logger` | `AddServices` | singleton | always |
+| `IPrintStrategy` / `ConsolePrintStrategy` | `AddServices` | singleton | always |
 | `IJsonService` / `JsonService` | `AddServices` | singleton | always |
 | `IRunService` / `RunService` | `AddServices` | singleton | always |
 | `TestsLoadedHandler` | `AddServices` | singleton | always |
@@ -71,3 +73,4 @@ The host is built but never started by `Program.cs`; there is no `Run()` call. N
 - [Web Automation](./web-automation.md)
 - [Mobile Automation](./mobile-automation.md)
 - [Domain Layer](./domain-layer.md)
+- [Logging](./logging.md)

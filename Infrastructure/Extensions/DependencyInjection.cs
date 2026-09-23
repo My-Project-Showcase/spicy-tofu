@@ -1,10 +1,14 @@
 using Application.Automation.Mobile;
 using Application.Automation.Web;
+using Application.Logging;
 using Application.Runtime.JsonService;
 using Application.Runtime.RunService;
 
+using Domain.Runtime.Environment.Configuration;
+
 using Infrastructure.Automation.Mobile;
 using Infrastructure.Automation.Web;
+using Infrastructure.Logging;
 using Infrastructure.Runtime.JsonService;
 using Infrastructure.Runtime.RunServices;
 using Infrastructure.Runtime.TestExecution;
@@ -58,6 +62,11 @@ public static class DependencyInjection
         this IServiceCollection service,
         IConfiguration configuration)
     {
+        service.Configure<LoggingConfig>(configuration.GetSection("Logging"));
+
+        service.AddSingleton<ILogger, Logger>();
+        service.AddSingleton<IPrintStrategy, ConsolePrintStrategy>();
+
         service.AddSingleton<IJsonService, JsonService>();
         service.AddSingleton<TestsLoadedHandler>();
         service.AddSingleton<IRunService, RunService>();

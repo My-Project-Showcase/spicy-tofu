@@ -1,12 +1,13 @@
 ---
 title: Configuration
-updated: 2026-09-22
+updated: 2026-09-23
 sources:
   - ../../Domain/Runtime/Environment/Configuration/SpicyTofuConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
   - ../../Domain/Runtime/Environment/Configuration/Projects.cs
   - ../../Domain/Runtime/Environment/Configuration/PlaywrightConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/AppiumConfig.cs
+  - ../../Domain/Runtime/Environment/Configuration/LoggingConfig.cs
   - ../../Web/Extension/WebExtensions.cs
   - ../../Mobile/Extensions/MobileExtensions.cs
   - ../../Web/appsettings.json
@@ -27,6 +28,8 @@ Example values (identical across both files):
 - `TestExecution:Workers` = `1`, `Retries` = `0`, `DefaultTimeoutMs` = `30000`. The `TestExecution` class also has a `Parallel` flag that the JSON files do not set.
 
 `Projects` is a core section in both JSON files. The web project binds it to the `Projects` option class, and `Projects:RootDirectory` (`D:\Projects\QA\Spicy-Tofu` in `Web/appsettings.json`) points at the folder holding the test-definition JSON files. The mobile project does not bind it; `Mobile/appsettings.json` keeps the default `./projects` value, which the mobile project never reads. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
+
+`Logging` is a fourth core section. It is bound to `LoggingConfig` in `AddServices` (shared through `AddInfrastructureDependencies`), so both platforms read it. The section is not present in either `appsettings.json`; the defaults live on `LoggingConfig` (`Level` = `Information`, `OutputMode` = empty, `Timestamps` = `false`, `MaxColumnWidth` = `40`, `MaxLineWidth` = `100`). See [Logging](./logging.md).
 
 ## Platform sections
 
@@ -73,3 +76,4 @@ Option classes live in `Domain.Runtime.Environment.Configuration` so both platfo
 - [Setup and Commands](./setup-and-commands.md)
 - [Platform Notes](../wiki/platform-notes.md)
 - [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md)
+- [Logging](./logging.md)

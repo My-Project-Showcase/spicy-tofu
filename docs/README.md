@@ -14,10 +14,11 @@ These pages are maintained by the agent and steered by humans. If a page and the
 | Page | Summary | Updated |
 |---|---|---|
 | [architecture-overview.md](./technical/architecture-overview.md) | Solution layout, the three core layers and two executables, project references, dependency direction, and package references. | 2026-09-20 |
-| [domain-layer.md](./technical/domain-layer.md) | Domain models, the aggregate root base, locator attributes, the execution step record, and the configuration option classes. | 2026-09-22 |
-| [configuration.md](./technical/configuration.md) | Configuration sections, which platform binds what, environment variable overlay, and binding gaps. | 2026-09-22 |
-| [dependency-injection.md](./technical/dependency-injection.md) | Composition roots, DI extensions, runtime services, and how `AddWebAutomation` and `AddMobileAutomation` gate the platform registrations. | 2026-09-22 |
-| [runtime-pipeline.md](./technical/runtime-pipeline.md) | How test case JSON becomes execution-ready steps: the `TestsLoaded` event, `TestsLoadedHandler`, `TestExecutionStep`, and the `RunService` subscription. | 2026-09-22 |
+| [domain-layer.md](./technical/domain-layer.md) | Domain models, the aggregate root base, locator attributes, the execution step record, and the configuration option classes. | 2026-09-23 |
+| [configuration.md](./technical/configuration.md) | Configuration sections, which platform binds what, environment variable overlay, and binding gaps. | 2026-09-23 |
+| [dependency-injection.md](./technical/dependency-injection.md) | Composition roots, DI extensions, runtime services, and how `AddWebAutomation` and `AddMobileAutomation` gate the platform registrations. | 2026-09-23 |
+| [runtime-pipeline.md](./technical/runtime-pipeline.md) | How test case JSON becomes execution-ready steps: the `TestsLoaded` event, `TestsLoadedHandler`, `TestExecutionStep`, and the `RunService` subscription. | 2026-09-23 |
+| [logging.md](./technical/logging.md) | The execution-oriented `ILogger` facade, `LogEntry`/`LogKind`, `LocatorCandidate`, the `IPrintStrategy` seam, and CI/Interactive rendering. | 2026-09-23 |
 | [automation-driver-contract.md](./technical/automation-driver-contract.md) | The core automation interfaces: `IAutomationDriver`, `IWebDriver`, `IWebPage`, `IWebSession`, `WebContextOptions`, `IMobileDriver`, `IMobileSession`, `MobileContextOptions`. | 2026-09-20 |
 | [web-automation.md](./technical/web-automation.md) | The Playwright implementation: `BrowserHost`, `WebDriver`, `BrowserSession`, `WebPage`, and timeout wiring. | 2026-09-20 |
 | [mobile-automation.md](./technical/mobile-automation.md) | The Appium implementation: `MobileHost`, `AppiumServerLauncher`, the Android and iOS device launchers, `MobileDriver`, and `MobileSession`. | 2026-09-20 |
@@ -31,7 +32,7 @@ These pages are maintained by the agent and steered by humans. If a page and the
 | [log.md](./wiki/log.md) | Append-only history of wiki changes. | 2026-09-20 |
 | [design-decisions.md](./wiki/design-decisions.md) | Why the framework is shaped the way it is: the `IWebPage` seam, named sessions, the browser singleton, platform gating, implicit mobile environment startup with reuse semantics, and the `AppiumConfig` naming. | 2026-09-20 |
 | [platform-notes.md](./wiki/platform-notes.md) | Per-platform knowledge for Playwright (web) and Appium (mobile). | 2026-09-20 |
-| [known-issues-and-discrepancies.md](./wiki/known-issues-and-discrepancies.md) | Stale AGENTS.md claims, empty or unused code, the mobile host that never starts, config binding gaps, and naming oddities. | 2026-09-22 |
+| [known-issues-and-discrepancies.md](./wiki/known-issues-and-discrepancies.md) | Stale AGENTS.md claims, empty or unused code, the mobile host that never starts, config binding gaps, and naming oddities. | 2026-09-23 |
 
 ## Conventions
 

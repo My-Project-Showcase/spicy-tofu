@@ -1,6 +1,6 @@
 ---
 title: Known Issues and Discrepancies
-updated: 2026-09-22
+updated: 2026-09-23
 sources:
   - ../../AGENTS.md
   - ../../docs/README.md
@@ -8,7 +8,10 @@ sources:
   - ../../Application/Automation/Web/IWebDriver.cs
   - ../../Domain/Runtime/Environment/TofuConfiguration.cs
   - ../../Domain/Runtime/Environment/Configuration/Projects.cs
-  - ../../Application/Locators/LocatorStrategy.cs
+  - ../../Application/Locators/LocatorCandidate.cs
+  - ../../Application/Logging/ILogger.cs
+  - ../../Infrastructure/Logging/OutputModeDetector.cs
+  - ../../Infrastructure/Logging/ConsolePrintStrategy.cs
   - ../../Infrastructure/Runtime/JsonService/JsonService.cs
   - ../../Infrastructure/Runtime/RunService/RunService.cs
   - ../technical/architecture-overview.md
@@ -28,7 +31,6 @@ This page records observable gaps between the documented intent (AGENTS.md, olde
 ## Empty or unused code
 
 - `Domain.Runtime.Environment.TofuConfiguration` is never bound or consumed.
-- `Application.Locators.LocatorStrategy` is an empty record, unused by any driver.
 - `Projects` (public) is bound and consumed only by the web project through `JsonService`, which reads `RootDirectory`. The mobile project never binds or consumes it.
 - `PlaywrightConfig.TimeOut` is unused; the framework reads `NavigationTimeoutMs`.
 - `docs/README.md` was an empty placeholder; this task filled it.
@@ -52,10 +54,11 @@ The platform hosts (`BrowserHost`, `MobileHost`) still run lazily only when a se
 - `Domain/Entities/TestCases/TestStep.cs` contains a class named `TestSteps`.
 - `Test` and `Workflow` redeclare `Id` and `Name`, hiding the base `AggregrateRoot` members; Debug builds emit `CS0108` warnings (not errors because warnings-as-errors only applies to Release).
 - Domain entity properties that are non-nullable but uninitialized (for example `Test.Id`, `Workflow.Steps`) emit `CS8618` in Debug builds.
+- `ILogger.Error` triggers `CA1716` (member name conflicts with the reserved language keyword `Error`), in the same class of tolerated warnings as `Domain.Shared`. The name is kept because `Error` is the idiomatic logging API name and matches the `LogLevel.Error` enum member.
 
 ## Format check
 
-`dotnet format spicy-tofu.sln --verify-no-changes` still reports violations in source files (whitespace, final-newline, and using-ordering diagnostics across Application, Domain, Infrastructure, Mobile, and Web). The runtime-pipeline files (`JsonService`, `RunService`, `TestsLoadedHandler`, `TestExecutionStep`, `IJsonService`) are clean; the remaining failures are all in files written before the web runner and runtime-pipeline work.
+`dotnet format spicy-tofu.sln --verify-no-changes` still reports violations in source files (whitespace, final-newline, and using-ordering diagnostics across Application, Domain, Infrastructure, Mobile, and Web). The runtime-pipeline and logging files (`JsonService`, `RunService`, `TestsLoadedHandler`, `TestExecutionStep`, `IJsonService`, the `Application/Logging` contracts, the `Application/Locators` locator code, and the `Infrastructure/Logging` implementation) are clean; the remaining failures are all in files written before the web runner and runtime-pipeline work.
 
 ## What is deliberately not recorded
 
@@ -68,3 +71,4 @@ The platform hosts (`BrowserHost`, `MobileHost`) still run lazily only when a se
 - [Configuration](../technical/configuration.md)
 - [Setup and Commands](../technical/setup-and-commands.md)
 - [Design Decisions](./design-decisions.md)
+- [Logging](../technical/logging.md)

@@ -1,6 +1,6 @@
 ---
 title: Domain Layer
-updated: 2026-09-22
+updated: 2026-09-23
 sources:
   - ../../Domain/Domain.csproj
   - ../../Domain/Shared/AggregateRoot.cs
@@ -15,6 +15,7 @@ sources:
   - ../../Domain/Runtime/Environment/Configuration/Projects.cs
   - ../../Domain/Runtime/Environment/Configuration/PlaywrightConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/AppiumConfig.cs
+  - ../../Domain/Runtime/Environment/Configuration/LoggingConfig.cs
 ---
 
 # Domain Layer
@@ -45,6 +46,7 @@ The `Domain.Runtime.Environment.Configuration` namespace holds one class per con
 - `Projects`: `public sealed`, with a single `RootDirectory` string. The web project binds it and `JsonService` reads it.
 - `PlaywrightConfig`: `Browser`, `Headless` (bool), `TimeOut`, `NavigationTimeoutMs` (ints). `TimeOut` is unused; the framework reads `NavigationTimeoutMs`.
 - `AppiumConfig`: `ServerUrl`, `PlatformName`, `AutomationName`, `DeviceName`, `PlatformVersion`, `App`, `AvdName`, `AndroidSdkPath`, `IosSimulatorUdid` strings, `AppiumServerExecutable` (string, defaults to `appium`), `NoReset` (bool), `NewCommandTimeoutSec` (int). The class name differs from the `Appium` section it binds; the `Appium` name is avoided because the Appium client package exposes a top-level `Appium` namespace that would collide.
+- `LoggingConfig`: `Level` (default `Information`), `OutputMode` (empty), `Timestamps` (`false`), `MaxColumnWidth` (`40`), `MaxLineWidth` (`100`). Bound to the `Logging` section in `AddServices`, so both platforms read it. See [Logging](./logging.md).
 
 `Domain.Runtime.Environment.TofuConfiguration` is a facade that surfaces `SpicyTofuConfig`, `PlaywrightConfig`, and `TestExecution`, but nothing binds or consumes it yet. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
 

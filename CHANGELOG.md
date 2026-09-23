@@ -25,6 +25,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Appium.WebDriver package (8.3.2) referenced by `Infrastructure` only.
 - Documentation: `docs/technical/` and `docs/wiki/` pages (including the new `docs/technical/mobile-automation.md`), the `docs/README.md` table of contents, and the wiki index and log.
 - Event-driven test loading pipeline: `IJsonService.TestsLoaded` raises after JSON deserialization with the loaded `List<Test>`, `TestsLoadedHandler` flattens the test hierarchy into `TestExecutionStep` records, and `RunService` subscribes inside `RunAsync`, converts through the handler, and runs the resulting steps.
+- Logging infrastructure: the `ILogger` facade with level filtering and `LogEntry` as the presentation-neutral handoff in `Application.Logging`, and `IPrintStrategy` as the rendering seam, implemented by `ConsolePrintStrategy` in `Infrastructure.Logging`. `Logging` is a core configuration section bound in `AddServices` (`LoggingConfig`), and `RunService` now reports its steps through `ILogger` instead of `Console.WriteLine`.
+
+### Changed
+
+- Logging refined into an execution-oriented API: the generic `KeyValue` and `Table` methods left `ILogger` (their only caller was the placeholder step print), replaced by `ActionStarted`, `LocatorResolution`, `ActionCompleted`, and `ActionFailed`, which take the `TestExecutionStep` directly. `LocatorCandidate(string Strategy, string Value)` replaces the empty `LocatorStrategy` record, `OutputModeDetector` is now consumed by `ConsolePrintStrategy`, and `Interactive` and `Ci` output render with different layouts while sharing the identical logger API. The action line is a single comma-separated kwargs line in both modes (shape `Action: {action}, Attribute: {attribute}, Target: {target}, Value: {value}, Workflow: {workflow}, TestCase: {testCase}`), wrapping at `Logging:MaxLineWidth`.
 
 ### Fixed
 
