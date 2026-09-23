@@ -4,7 +4,7 @@ This is the index of every page in the wiki. It is grouped by category. The wiki
 
 ## Architecture
 
-- [Design Decisions](./design-decisions.md): why `IWebPage` keeps Playwright out of the core, why sessions are named, why the browser host is a semaphore-guarded singleton, how platform-gated registration works, why mobile starts the Appium server and device implicitly with a reuse-and-own lifecycle, and why the mobile config class is `AppiumConfig`.
+- [Design Decisions](./design-decisions.md): why `IWebPage` keeps Playwright out of the core, why sessions are named, why the browser host is a semaphore-guarded singleton, the single `AddAutomation` composition point, why the run service owns the driver lifecycle, why mobile starts the Appium server and device implicitly with a reuse-and-own lifecycle, and why the mobile config class is `AppiumConfig`.
 
 ## Platforms
 
@@ -12,7 +12,7 @@ This is the index of every page in the wiki. It is grouped by category. The wiki
 
 ## Known Issues
 
-- [Known Issues and Discrepancies](./known-issues-and-discrepancies.md): stale AGENTS.md claims, empty or unused code, the mobile host that never starts, configuration binding gaps, naming oddities, and the format check result.
+- [Known Issues and Discrepancies](./known-issues-and-discrepancies.md): stale AGENTS.md claims, empty or unused code, naming oddities, and the format check result.
 
 ## Related
 

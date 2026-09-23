@@ -23,18 +23,18 @@ Dependencies point inward. Domain depends on nothing.
 
 ## Platform wiring
 
-Platform implementations are discovered and wired by the reflection-based resolver. To add platform behavior, implement a core interface in the platform assembly and let the resolver find it.
+Platforms are wired once at composition time through `AddAutomation`, which reads `SpicyTofu:Platform` and registers exactly one driver as `IAutomationDriver`. To add platform behavior, implement a core interface in the platform assembly and register it from `AddAutomation` (or the platform's own composition method). There is no reflection-based resolver.
 
 ## Configuration
 
 Settings live in `appsettings.json`, split by owner:
 
-- Core sections (`SpicyTofu`, `Projects`, `TestExecution`) are platform-neutral. `SpicyTofu` and `TestExecution` are bound by both platforms; `Projects` is bound by the web project only.
+- Core sections (`SpicyTofu`, `Projects`, `TestExecution`) are platform-neutral. `SpicyTofu`, `Projects`, and `TestExecution` are bound by both platforms.
 - `Playwright` is read only by the web project. `Appium` is read only by the mobile project.
 
 - MUST NOT add platform-specific keys to core sections. Put them in that platform's section.
 - MUST NOT read another platform's section from a platform project.
-- MUST NOT branch on `SpicyTofu:Platform` outside the composition root and the resolver.
+- MUST NOT branch on `SpicyTofu:Platform` outside `AddAutomation` (the composition root). No other code may read or compare it.
 - MUST NOT commit secrets. Use user secrets or environment variables.
 
 ## Constraints
@@ -43,7 +43,7 @@ Settings live in `appsettings.json`, split by owner:
 - MUST keep Playwright and Appium APIs inside their own platform assemblies.
 - MUST NOT add platform checks (`if (isMobile)`, platform enums, and similar) to core code. If behavior differs, add an interface to the core and implement it per platform.
 - MUST NOT reference Playwright or Appium types from Domain or Application.
-- MUST NOT bypass the resolver by instantiating platform classes directly from core code.
+- MUST NOT bypass `AddAutomation` by instantiating platform classes directly from core code or by registering a driver elsewhere.
 - MUST NOT add a package reference from the core to a platform assembly, directly or transitively.
 
 ## Component library locators
@@ -56,7 +56,7 @@ Each component library has its own locator class holding that library's locators
 1. Decide whether it is platform-neutral. If so, model it in the core.
 2. Define the interface in the core first.
 3. Implement it in the web assembly, the mobile assembly, or both.
-4. Confirm the resolver picks up the new implementation.
+4. Confirm `AddAutomation` registers the new implementation for the selected `SpicyTofu:Platform`.
 5. Write the documentation and update the changelog as described in the Documentation and Changelog sections.
 
 **Modifying existing code**
@@ -208,8 +208,8 @@ Style is defined by `.editorconfig` and `Directory.Build.props` at the repo root
 
 - Solution and project layout: solution `spicy-tofu.sln` at the repo root; five projects in same-named top-level folders. `Domain`, `Application`, and `Infrastructure` form the core; `Web` and `Mobile` are the platform executables. Both `Web` and `Mobile` reference `Application`, `Domain`, and `Infrastructure`. All projects target `net9.0` with `Nullable` and `ImplicitUsings` enabled.
 - Namespace and naming rules: namespaces mirror the project and folder path (`Domain.Runtime.Environment.Configuration`, `Web.Extensions`); use file-scoped namespaces and mark classes `sealed` unless they must be extended. Style and naming are enforced by `.editorconfig` and `Directory.Build.props` (enforced in build): 4-space indentation, Allman braces, `_camelCase` private/internal fields, `s_` static-field prefix, PascalCase constants, C# keywords over BCL types, usings outside the namespace, UTF-8 files.
-- Configuration location: configuration in `Web/appsettings.json` and `Mobile/appsettings.json` (copied to output), overlaid by `TOFU_`-prefixed environment variables, bound to the `SpicyTofu`, `Playwright`, `Appium`, `TestExecution`, and `Projects` option classes in `Domain.Runtime.Environment.Configuration`. `Logging` is a core section too, bound by both platforms in `AddServices`; the section is absent from the JSON files, so the `LoggingConfig` defaults apply unless overlaid. `Projects:RootDirectory` is set in `Web/appsettings.json` and points at the test-definition data folder; the mobile project keeps the default `./projects` value and never reads it. No test projects exist yet; when added, record their location here.
-- Runtime pipeline: `JsonService` loads the test JSON and raises the `IJsonService.TestsLoaded` application event with the loaded `List<Test>`; `TestsLoadedHandler.Flatten` converts that list into `IEnumerable<TestExecutionStep>`; `RunService.RunAsync` subscribes to the event, converts through the handler, and executes the steps, reporting each step through `ILogger`. The web entry point drives it via `RunAsync`; the mobile entry point does not start a run yet. See `docs/technical/runtime-pipeline.md`.
+- Configuration location: configuration in `Web/appsettings.json` and `Mobile/appsettings.json` (copied to output), overlaid by `TOFU_`-prefixed environment variables, bound to the `SpicyTofu`, `Playwright`, `Appium`, `TestExecution`, and `Projects` option classes in `Domain.Runtime.Environment.Configuration`. `Logging` is a core section too, bound by both platforms in `AddServices`; the section is absent from the JSON files, so the `LoggingConfig` defaults apply unless overlaid. `Projects:RootDirectory` is set in `Web/appsettings.json` and points at the test-definition data folder; the mobile project keeps the default `./projects` value. Both platforms bind `Projects`. No test projects exist yet; when added, record their location here.
+- Runtime pipeline and platform selection: `AddAutomation` reads `SpicyTofu:Platform` at composition and registers exactly one driver as `IAutomationDriver` (`WebDriver` for `Web`, `MobileDriver` for `Mobile`); `RunService` takes that driver and calls `StartAsync` before loading tests and `StopAsync` in a `finally`. `JsonService` loads the test JSON and raises the `IJsonService.TestsLoaded` application event with the loaded `List<Test>`; `TestsLoadedHandler.Flatten` converts that list into `IEnumerable<TestExecutionStep>`; `RunService.RunAsync` subscribes to the event, converts through the handler, and executes the steps, reporting each step through `ILogger`. Both entry points resolve `IRunService` and drive it via `RunAsync`. See `docs/technical/runtime-pipeline.md` and `docs/technical/dependency-injection.md`.
 - Logging: `ILogger` and `IPrintStrategy` are core interfaces in `Application.Logging`; `Logger` (level filtering, timestamps) and `ConsolePrintStrategy` (all presentation, plain text only) live in `Infrastructure.Logging`. `ILogger` exposes execution concepts (`ActionStarted`, `LocatorResolution`, `ActionCompleted`, `ActionFailed`) that take `TestExecutionStep` directly, plus `Debug`, `Info`, `Warning`, `Error`, and `Section`; locator data arrives as `Application.Locators.LocatorCandidate`. Table formatting is private to `ConsolePrintStrategy`, which renders `Interactive` and `Ci` output through `OutputModeDetector`. The logger writes `Console` only through `ConsolePrintStrategy`; consumers take `ILogger` and never touch `Console` or the strategy directly. See `docs/technical/logging.md`.
 - Documentation location: `docs/technical/`, `docs/wiki/`, and `docs/README.md` (see Documentation).
 - Changelog location: `CHANGELOG.md` at the repo root. The current version is the version number in `Directory.Build.props` (see Changelog).

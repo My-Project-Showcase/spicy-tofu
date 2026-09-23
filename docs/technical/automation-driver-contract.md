@@ -1,6 +1,6 @@
 ---
 title: Automation Driver Contract
-updated: 2026-09-20
+updated: 2026-09-23
 sources:
   - ../../Application/Application.csproj
   - ../../Application/Automation/IAutomationDriver.cs
@@ -24,19 +24,17 @@ The `Application` project owns the driver abstraction every platform implements.
 - `Task StartAsync()`
 - `Task StopAsync()`
 
-It does not carry class members; it is a plain interface. There is no shared dispatcher type in `Application` that resolves a driver; callers resolve `IAutomationDriver` from DI. See [Dependency Injection](./dependency-injection.md).
+It does not carry class members; it is a plain interface. There is no shared dispatcher type in `Application` that resolves a driver; `RunService` receives the resolved `IAutomationDriver` through DI and owns its lifecycle. See [Dependency Injection](./dependency-injection.md) and [Runtime Pipeline](./runtime-pipeline.md).
 
 ## IWebDriver
 
-`Application.Automation.Web.IWebDriver` implements `IAsyncDisposable` and adds web-specific surface:
+`Application.Automation.Web.IWebDriver` inherits `IAutomationDriver` and implements `IAsyncDisposable`. It adds web-specific surface:
 
 - `IWebPage Page`: the page of the session named `default`.
-- `Task StartAsync()`: start the `default` session.
-- `Task StopAsync()`: stop all sessions.
 - `Task<IWebSession> StartSessionAsync(string name, WebContextOptions? options = null)`: start a named session.
 - `IWebSession GetSession(string name)`: return a running session or throw.
 
-Note that `IWebDriver` does not inherit `IAutomationDriver`; it declares the same `StartAsync` and `StopAsync` methods itself.
+The lifecycle methods `StartAsync` and `StopAsync` come from `IAutomationDriver`; they are not redeclared here.
 
 ## IWebPage
 
@@ -55,14 +53,12 @@ Note that `IWebDriver` does not inherit `IAutomationDriver`; it declares the sam
 
 ## IMobileDriver
 
-`Application.Automation.Mobile.IMobileDriver` mirrors `IWebDriver`: it implements `IAsyncDisposable` and adds mobile-specific surface:
+`Application.Automation.Mobile.IMobileDriver` mirrors `IWebDriver`: it inherits `IAutomationDriver` and implements `IAsyncDisposable`, and adds mobile-specific surface:
 
-- `Task StartAsync()`: start the `default` session.
-- `Task StopAsync()`: stop all sessions.
 - `Task<IMobileSession> StartSessionAsync(string name, MobileContextOptions? options = null)`: start a named session.
 - `IMobileSession GetSession(string name)`: return a running session or throw.
 
-Like `IWebDriver` it does not inherit `IAutomationDriver`; it declares `StartAsync` and `StopAsync` itself. There is no page property yet because mobile interaction surface is not defined.
+Like `IWebDriver`, the lifecycle methods come from `IAutomationDriver` and are not redeclared. There is no page property yet because mobile interaction surface is not defined.
 
 ## IMobileSession
 
@@ -76,9 +72,9 @@ It does not expose a page or screen yet. The implementation wraps an Appium driv
 
 `Application.Automation.Mobile.MobileContextOptions`: a sealed record with no members. It exists so `StartSessionAsync` has a stable options parameter, mirroring `WebContextOptions`. There are no mobile per-session options yet.
 
-## Resolver note
+## Platform wiring
 
-AGENTS.md describes a "reflection-based resolver" that discovers platform implementations. No such type exists in the code today. Platform wiring is performed explicitly through `AddWebAutomation`. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
+Platform selection happens once at composition time in `AddAutomation`, which reads `SpicyTofu:Platform` and registers exactly one driver as `IAutomationDriver`. Execution code never branches on platform; `RunService` takes the selected driver and calls only `IAutomationDriver` members. See [Dependency Injection](./dependency-injection.md) and [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
 
 ## Related pages
 

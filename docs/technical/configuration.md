@@ -27,7 +27,7 @@ Example values (identical across both files):
 - `SpicyTofu:Environment` = `Development`; `SpicyTofu:Platform` differs: `Web` in the web file, `Mobile` in the mobile file.
 - `TestExecution:Workers` = `1`, `Retries` = `0`, `DefaultTimeoutMs` = `30000`. The `TestExecution` class also has a `Parallel` flag that the JSON files do not set.
 
-`Projects` is a core section in both JSON files. The web project binds it to the `Projects` option class, and `Projects:RootDirectory` (`D:\Projects\QA\Spicy-Tofu` in `Web/appsettings.json`) points at the folder holding the test-definition JSON files. The mobile project does not bind it; `Mobile/appsettings.json` keeps the default `./projects` value, which the mobile project never reads. See [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
+`Projects` is a core section in both JSON files. Both platforms bind it to the `Projects` option class. `Projects:RootDirectory` (`D:\Projects\QA\Spicy-Tofu` in `Web/appsettings.json`) points at the folder holding the test-definition JSON files; `Mobile/appsettings.json` keeps the default `./projects` value.
 
 `Logging` is a fourth core section. It is bound to `LoggingConfig` in `AddServices` (shared through `AddInfrastructureDependencies`), so both platforms read it. The section is not present in either `appsettings.json`; the defaults live on `LoggingConfig` (`Level` = `Information`, `OutputMode` = empty, `Timestamps` = `false`, `MaxColumnWidth` = `40`, `MaxLineWidth` = `100`). See [Logging](./logging.md).
 
@@ -65,7 +65,9 @@ The `PlaywrightConfig` class also has a `TimeOut` property that is not set by JS
 ## Where configuration is read
 
 - `WebExtensions.AddWebExtensions` binds `SpicyTofuConfig`, `Projects`, `PlaywrightConfig`, and `TestExecution`.
-- `MobileExtensions.AddConfigProperties` binds `SpicyTofuConfig`, `TestExecution`, and `AppiumConfig`.
+- `MobileExtensions.AddConfigProperties` binds `SpicyTofuConfig`, `Projects`, `TestExecution`, and `AppiumConfig`.
+
+`SpicyTofu:Platform` is read by `AddAutomation` (shared, in `Infrastructure.Extensions`), the single composition point that selects the driver. No other code reads it. See [Dependency Injection](./dependency-injection.md).
 
 Option classes live in `Domain.Runtime.Environment.Configuration` so both platforms share them.
 

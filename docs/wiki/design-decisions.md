@@ -1,6 +1,6 @@
 ---
 title: Design Decisions
-updated: 2026-09-20
+updated: 2026-09-23
 sources:
   - ../technical/architecture-overview.md
   - ../technical/automation-driver-contract.md
@@ -33,9 +33,15 @@ The application contract exposes `IWebPage` and `IWebSession` instead of Playwri
 
 `BrowserHost` is a singleton that creates the Playwright instance and launches the browser lazily. Startup is guarded by `SemaphoreSlim(1, 1)` so concurrent requests from multiple sessions produce a single browser. Registered directly as the concrete `BrowserHost`, with no `IBrowserHost` abstraction. This is a pragmatic choice for a single-owned browser process; the reasoning for a concrete registration is that no second implementation exists yet.
 
-## Platform-gated registration in AddWebAutomation
+## Single composition point instead of a resolver
 
-`AddWebAutomation` checks `configuration["SpicyTofu:Platform"]` and only registers web services when the value equals `Web` (case-insensitive). This keeps core code free of platform checks: the check happens in the composition wiring, matching AGENTS.md, which allows branching on `SpicyTofu:Platform` at the composition root. Web and mobile do not reference each other, and each platform adds its own services through its own composition root.
+Platform selection happens exactly once, in `AddAutomation`, which reads `SpicyTofu:Platform` and registers exactly one driver as `IAutomationDriver`. The value is checked once during service registration, and a missing or unknown value throws `InvalidOperationException` at composition time. There is no reflection-based resolver, no factory, and no service locator; execution code never branches on platform. AGENTS.md describes this single composition point directly.
+
+The reasoning: platform selection is a wiring concern, not a runtime concern. Reading the configured platform once at composition keeps every layer below the composition root free of `if (isMobile)` style checks, so `RunService` and the domain never see a platform enum. Fail-fast composition means a bad platform config cannot fail halfway through a run with a confusing resolution error.
+
+## Driver lifecycle owned by the run service
+
+`RunService` receives the selected driver as `IAutomationDriver` and calls `StartAsync` before loading tests and `StopAsync` in a `finally`, so the driver is always stopped whether the run succeeds or throws. The entry points never touch the driver and never construct one. This centralizes lifecycle in one place: the web and mobile executables are identical apart from their `SpicyTofu:Platform` value.
 
 ## Timeout injection through options
 
@@ -57,9 +63,9 @@ Mobile automation needs a running Appium server and a booted device, which the u
 
 The mobile config class is `AppiumConfig`, not `Appium`. `Appium.WebDriver` exposes a top-level assembly namespace literally named `Appium`; a class with the same name becomes unresolvable in code that imports the client (CS0118). Naming the class `AppiumConfig` (matching the existing `PlaywrightConfig`) avoids the collision and keeps the JSON section `Appium` unchanged. See [Configuration](../technical/configuration.md).
 
-## Unimplemented resolver
+## Unimplemented resolver vs the single composition point
 
-AGENTS.md describes a reflection-based resolver for platform implementations. No such component exists in the code. Platform wiring is done explicitly. Treat the resolver as planned, not present.
+Older AGENTS.md text described a reflection-based resolver for platform implementations. That was never implemented, and the current decision is to keep platform selection explicit: one `AddAutomation` method, one config read, one `IAutomationDriver` registration. See [Dependency Injection](../technical/dependency-injection.md).
 
 ## Related pages
 

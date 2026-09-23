@@ -25,6 +25,9 @@ public static class MobileExtensions
         service.Configure<SpicyTofuConfig>(
             configuration.GetSection("SpicyTofu"));
 
+        service.Configure<Projects>(
+            configuration.GetSection("Projects"));
+
         service.Configure<TestExecution>(
             configuration.GetSection("TestExecution"));
 

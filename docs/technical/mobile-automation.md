@@ -1,6 +1,6 @@
 ---
 title: Mobile Automation
-updated: 2026-09-20
+updated: 2026-09-23
 sources:
   - ../../Infrastructure/Automation/Mobile/MobileHost.cs
   - ../../Infrastructure/Automation/Mobile/MobileDriver.cs
@@ -65,7 +65,7 @@ Both implement `Infrastructure.Automation.Mobile.Devices.IDeviceLauncher`, which
 
 ## MobileDriver
 
-`MobileDriver` is registered as scoped and implements `IMobileDriver`.
+`MobileDriver` is registered as a singleton (as `MobileDriver`, `IMobileDriver`, and `IAutomationDriver`, all resolving to the same instance) and implements `IMobileDriver`.
 
 - Holds a `ConcurrentDictionary<string, MobileSession>` keyed by session name. The default session name is the constant `"default"`.
 - `StartAsync` starts the `default` session via `StartSessionAsync("default")`.
@@ -81,16 +81,16 @@ Both implement `Infrastructure.Automation.Mobile.Devices.IDeviceLauncher`, which
 
 ## DI registration
 
-`AddMobileAutomation` registers `MobileHost` as a singleton and `IMobileDriver`/`MobileDriver` as scoped, gated on `SpicyTofu:Platform` = `Mobile`. See [Dependency Injection](./dependency-injection.md).
+`AddAutomation` registers `MobileHost` as a singleton and `MobileDriver` as a singleton, forwarding `IMobileDriver` and `IAutomationDriver` to that same instance, when `SpicyTofu:Platform` is `Mobile`. See [Dependency Injection](./dependency-injection.md).
 
 ## Lifecycle summary
 
 | Action | Component | Behavior |
 |---|---|---|
 | First session start | `MobileHost` | starts Appium server, then the device |
-| `StartAsync` | `MobileDriver` | starts the `default` session |
+| `StartAsync` | `RunService` via `IAutomationDriver` | starts the `default` session |
 | `StartSessionAsync(name, ...)` | `MobileDriver` | creates an Appium driver and registers a `MobileSession` |
-| `StopAsync` / dispose | `MobileDriver` | disposes every registered driver |
+| `StopAsync` / dispose | `RunService` via `IAutomationDriver` | disposes every registered driver |
 | Host dispose | `MobileHost` | shuts down only what it started |
 
 ## Related pages
