@@ -1,6 +1,6 @@
 ---
 title: Logging
-updated: 2026-09-23
+updated: 2026-09-25
 sources:
   - ../../Application/Logging/ILogger.cs
   - ../../Application/Logging/LogEntry.cs
@@ -165,7 +165,7 @@ Table rendering (column sizing, word wrap, the dash separator) lives inside `Con
 
 ## Formatting rules
 
-- All output is plain text; message and value text wraps at `Logging:MaxLineWidth` (100 by default) with continuation lines indented 4 spaces.
+- All output is plain text; message and value text wraps at `Logging:MaxLineWidth` (135 by default) with continuation lines indented 4 spaces.
 - Table columns wrap at `Logging:MaxColumnWidth` (40 by default) with a 3-space gap between columns.
 - Layout is chosen per entry, not per run block, so parallel workers cannot desynchronize shared output.
 
@@ -179,7 +179,7 @@ Table rendering (column sizing, word wrap, the dash separator) lives inside `Con
 | `Logging:OutputMode` | empty | `Interactive` or `Ci`; see Output mode. |
 | `Logging:Timestamps` | `false` | Prints `[HH:mm:ss]` before message lines. |
 | `Logging:MaxColumnWidth` | `40` | Cap for table column widths. |
-| `Logging:MaxLineWidth` | `100` | Cap for message line width. |
+| `Logging:MaxLineWidth` | `135` | Cap for message line width. |
 
 `TOFU_Logging__Level` and the other keys override these through the existing environment-variable overlay (the `TOFU_` prefix separates from the section, `__` separates segments). The section is not present in the `appsettings.json` files; the defaults above apply unless overlaid.
 

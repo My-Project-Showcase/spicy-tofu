@@ -1,6 +1,6 @@
 ---
 title: Configuration
-updated: 2026-09-23
+updated: 2026-09-25
 sources:
   - ../../Domain/Runtime/Environment/Configuration/SpicyTofuConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
@@ -29,14 +29,14 @@ Example values (identical across both files):
 
 `Projects` is a core section in both JSON files. Both platforms bind it to the `Projects` option class. `Projects:RootDirectory` (`D:\Projects\QA\Spicy-Tofu` in `Web/appsettings.json`) points at the folder holding the test-definition JSON files; `Mobile/appsettings.json` keeps the default `./projects` value.
 
-`Logging` is a fourth core section. It is bound to `LoggingConfig` in `AddServices` (shared through `AddInfrastructureDependencies`), so both platforms read it. The section is not present in either `appsettings.json`; the defaults live on `LoggingConfig` (`Level` = `Information`, `OutputMode` = empty, `Timestamps` = `false`, `MaxColumnWidth` = `40`, `MaxLineWidth` = `100`). See [Logging](./logging.md).
+`Logging` is a fourth core section. It is bound to `LoggingConfig` in `AddServices` (shared through `AddInfrastructureDependencies`), so both platforms read it. The section is not present in either `appsettings.json`; the defaults live on `LoggingConfig` (`Level` = `Information`, `OutputMode` = empty, `Timestamps` = `false`, `MaxColumnWidth` = `40`, `MaxLineWidth` = `135`). See [Logging](./logging.md).
 
 ## Platform sections
 
 `Playwright` is bound only by the web project:
 
 - `Browser` = `Chromium`
-- `Headless` = `true`
+- `Headless` = `false`
 - `NavigationTimeoutMs` = `30000`
 
 The `PlaywrightConfig` class also has a `TimeOut` property that is not set by JSON and is not used by the framework.
@@ -56,7 +56,7 @@ The `PlaywrightConfig` class also has a `TimeOut` property that is not set by JS
 - `NoReset` = `false`
 - `NewCommandTimeoutSec` = `120`
 
-`Web/appsettings.json` also carries an `Appium` section for reference, but the web project never binds it.
+`Appium` appears only in `Mobile/appsettings.json`. The web file has no `Appium` section, and the web project never binds `AppiumConfig`.
 
 ## Environment variable overlay
 

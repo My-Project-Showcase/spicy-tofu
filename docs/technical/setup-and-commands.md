@@ -1,6 +1,6 @@
 ---
 title: Setup and Commands
-updated: 2026-09-20
+updated: 2026-09-25
 sources:
   - ../../AGENTS.md
   - ../../Directory.Build.Props
@@ -68,7 +68,7 @@ Style is defined by `.editorconfig` and `Directory.Build.props` and enforced in 
 
 - `appsettings.json` in `Web/` and `Mobile/` (both copied to output with `CopyToOutputDirectory=PreserveNewest`).
 - `TOFU_`-prefixed environment variables overlay the JSON.
-- `Directory.Build.props` sets analysis level, code style enforcement, and Release-only warnings-as-errors. It contains no version property.
+- `Directory.Build.props` sets analysis level, code style enforcement, and Release-only warnings-as-errors. It also carries the `Version` property (`0.1.0`), which is the single source of the version used by `CHANGELOG.md`.
 
 ## Configuration binding by platform
 
@@ -76,9 +76,10 @@ Style is defined by `.editorconfig` and `Directory.Build.props` and enforced in 
 |---|---|---|
 | `SpicyTofu` | yes | yes |
 | `TestExecution` | yes | yes |
-| `Projects` | no | no |
+| `Projects` | yes | yes |
 | `Playwright` | yes | no |
 | `Appium` | no | yes |
+| `Logging` | yes, in `AddServices` | yes, in `AddServices` |
 
 See [Configuration](./configuration.md).
 
