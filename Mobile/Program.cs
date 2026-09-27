@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Mobile.Extensions;
 
 using IHost host = Host.CreateDefaultBuilder(args)
+    .UseContentRoot(AppContext.BaseDirectory)
     .ConfigureServices((context, services) =>
     {
         services.AddMobileDependencies(context.Configuration);

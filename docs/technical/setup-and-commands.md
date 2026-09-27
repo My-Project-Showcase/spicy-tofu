@@ -1,6 +1,6 @@
 ---
 title: Setup and Commands
-updated: 2026-09-25
+updated: 2026-09-27
 sources:
   - ../../AGENTS.md
   - ../../Directory.Build.Props
@@ -66,7 +66,7 @@ Style is defined by `.editorconfig` and `Directory.Build.props` and enforced in 
 
 ## Configuration sources
 
-- `appsettings.json` in `Web/` and `Mobile/` (both copied to output with `CopyToOutputDirectory=PreserveNewest`).
+- `appsettings.json` in `Web/` and `Mobile/` (both copied to output with `CopyToOutputDirectory=PreserveNewest`). Both entry points set the host content root to `AppContext.BaseDirectory`, so the output copy is loaded no matter which directory the process is started from (Rider, `dotnet run`, or the built `.exe` directly).
 - `TOFU_`-prefixed environment variables overlay the JSON.
 - `Directory.Build.props` sets analysis level, code style enforcement, and Release-only warnings-as-errors. It also carries the `Version` property (`0.1.0`), which is the single source of the version used by `CHANGELOG.md`.
 

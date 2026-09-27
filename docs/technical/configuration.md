@@ -1,6 +1,6 @@
 ---
 title: Configuration
-updated: 2026-09-25
+updated: 2026-09-27
 sources:
   - ../../Domain/Runtime/Environment/Configuration/SpicyTofuConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
@@ -10,6 +10,8 @@ sources:
   - ../../Domain/Runtime/Environment/Configuration/LoggingConfig.cs
   - ../../Web/Extension/WebExtensions.cs
   - ../../Mobile/Extensions/MobileExtensions.cs
+  - ../../Web/Program.cs
+  - ../../Mobile/Program.cs
   - ../../Web/appsettings.json
   - ../../Mobile/appsettings.json
 ---
@@ -17,6 +19,12 @@ sources:
 # Configuration
 
 Settings live in `appsettings.json`, split by owner. Core sections are platform-neutral and are bound by both platforms. `Playwright` is read only by the web project and `Appium` only by the mobile project; this split is enforced per assembly by which option classes each platform's DI registers.
+
+## Where appsettings.json is loaded from
+
+Both entry points call `UseContentRoot(AppContext.BaseDirectory)` on the host builder, so `appsettings.json` is read from the application base directory (the build output folder next to `Web.dll`/`Mobile.dll`, or the publish folder for a published build), not from the current working directory. This makes the executables start correctly from any working directory: Rider, `dotnet run --project Web` from the repository root, or running the built `.exe` directly.
+
+Without this, `Host.CreateDefaultBuilder` would default the content root to `Directory.GetCurrentDirectory()`, and `appsettings.json` would only load when the process happened to start in `Web/`, `Mobile/`, or their output folders. Anywhere else `SpicyTofu:Platform` would be missing and `AddAutomation` would throw `InvalidOperationException` at composition time. See [Dependency Injection](./dependency-injection.md) and [Setup and Commands](./setup-and-commands.md).
 
 ## Core sections
 

@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- `appsettings.json` was loaded from the process working directory, so launching the web or mobile executable from anywhere other than its project or output folder (for example Rider's default run configuration or `dotnet run --project` from the repository root) failed at composition time with `Unknown or missing SpicyTofu:Platform`. Both entry points now set the host content root to the application base directory, so the output copy of `appsettings.json` is always loaded.
 - The iOS simulator "not configured" guard ran after the booted check, so an empty `IosSimulatorUdid` was never reported; the guard now runs first.
 - Appium server and emulator processes could stall when their redirected output filled the OS pipe buffer; their stdout and stderr are now drained asynchronously.
 - The default `appium` executable failed to launch on Windows because npm installs it as a `.cmd`/`.ps1` shim; the launcher now runs shim executables through `cmd.exe /c` on Windows.

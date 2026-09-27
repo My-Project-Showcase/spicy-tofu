@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Web.Extension;
 
 using IHost host = Host.CreateDefaultBuilder(args)
+    .UseContentRoot(AppContext.BaseDirectory)
     .ConfigureServices((context, services) =>
     {
         services.AddWebExtensions(context.Configuration);

@@ -1,6 +1,6 @@
 ---
 title: Dependency Injection
-updated: 2026-09-23
+updated: 2026-09-27
 sources:
   - ../../Infrastructure/Extensions/DependencyInjection.cs
   - ../../Application/Automation/IAutomationDriver.cs
@@ -16,7 +16,7 @@ The web and mobile executables are the composition roots. Both read configuratio
 
 ## Web entry point
 
-`Web/Program.cs` builds the generic host and calls, in order:
+`Web/Program.cs` builds the generic host with `Host.CreateDefaultBuilder(args)`, sets the content root to `AppContext.BaseDirectory` so `appsettings.json` is read from the build output folder regardless of the working directory, and calls, in order:
 
 1. `AddWebExtensions` (from `WebExtensions`): loads `appsettings.json`, overlays `TOFU_`-prefixed environment variables, binds `SpicyTofuConfig`, `Projects`, `PlaywrightConfig`, and `TestExecution`.
 2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which binds the `Logging` section and registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), and `TestsLoadedHandler`.
@@ -40,7 +40,7 @@ See [Automation Driver Contract](./automation-driver-contract.md) for the interf
 
 ## Mobile entry point
 
-`Mobile/Program.cs` builds the generic host and calls, in order:
+`Mobile/Program.cs` builds the generic host with `Host.CreateDefaultBuilder(args)`, sets the content root to `AppContext.BaseDirectory` (same reason as the web entry point), and calls, in order:
 
 1. `AddMobileDependencies` (from `MobileExtensions`): loads configuration, overlays `TOFU_` variables, and binds `SpicyTofuConfig`, `Projects`, `TestExecution`, and `AppiumConfig`. Note it binds the options twice (once in `AddConfigProperties` called directly, once through `AddEnvCompatibility`, which builds a merged configuration and re-binds), which is redundant but harmless.
 2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): the same passthrough as the web entry point.
