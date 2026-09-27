@@ -1,10 +1,12 @@
 ---
 title: Mobile Automation
-updated: 2026-09-23
+updated: 2026-09-27
 sources:
   - ../../Infrastructure/Automation/Mobile/MobileHost.cs
   - ../../Infrastructure/Automation/Mobile/MobileDriver.cs
   - ../../Infrastructure/Automation/Mobile/MobileSession.cs
+  - ../../Infrastructure/Automation/Mobile/MobileResolvedElement.cs
+  - ../../Infrastructure/Automation/Mobile/MobileLocatorResolver.cs
   - ../../Infrastructure/Automation/Mobile/AppiumServerLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/IDeviceLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/AndroidEmulatorLauncher.cs
@@ -77,7 +79,26 @@ Both implement `Infrastructure.Automation.Mobile.Devices.IDeviceLauncher`, which
 
 ## MobileSession
 
-`MobileSession` implements `IMobileSession` with `Name`. It holds the underlying Appium driver, currently exposed only to the containing driver. There is no page or element surface on the contract yet.
+`MobileSession` implements `IMobileSession` with `Name` and `ResolveAsync`. It holds the underlying Appium driver.
+
+`ResolveAsync(Locator)` builds an Appium `By` and returns a `MobileResolvedElement` when it matches, or null when it does not:
+
+| Strategy | Appium call |
+|---|---|
+| Id | `MobileBy.Id(value)` |
+| Name | `MobileBy.Name(value)` |
+| AccessibilityId | `MobileBy.AccessibilityId(value)` |
+| XPath | `MobileBy.XPath(value)` |
+
+Presence is checked with `FindElements`. Web-only strategies (Role, Label, Placeholder, Text, TestId, Css) return null, so the resolver skips them on mobile.
+
+## MobileResolvedElement
+
+`MobileResolvedElement` implements `IResolvedElement` with the matched `Locator` and the Selenium `IWebElement` handle.
+
+## MobileLocatorResolver
+
+`MobileLocatorResolver` implements `ILocatorResolver`. It walks `Element.Locators` in order against the `default` session, calls `ResolveAsync` for each, and returns the first match. When nothing matches it throws `InvalidOperationException`. It is registered as `ILocatorResolver` for the mobile platform.
 
 ## DI registration
 
@@ -96,6 +117,7 @@ Both implement `Infrastructure.Automation.Mobile.Devices.IDeviceLauncher`, which
 ## Related pages
 
 - [Automation Driver Contract](./automation-driver-contract.md)
+- [Elements and Locators](./elements-and-locators.md)
 - [Dependency Injection](./dependency-injection.md)
 - [Configuration](./configuration.md)
 - [Platform Notes](../wiki/platform-notes.md)

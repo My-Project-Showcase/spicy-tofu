@@ -1,11 +1,12 @@
 ---
 title: Logging
-updated: 2026-09-25
+updated: 2026-09-27
 sources:
   - ../../Application/Logging/ILogger.cs
   - ../../Application/Logging/LogEntry.cs
   - ../../Application/Logging/IPrintStrategy.cs
-  - ../../Application/Locators/LocatorCandidate.cs
+  - ../../SharedKernel/Locators/Locator.cs
+  - ../../SharedKernel/Locators/LocatorStrategy.cs
   - ../../Infrastructure/Logging/Logger.cs
   - ../../Infrastructure/Logging/ConsolePrintStrategy.cs
   - ../../Infrastructure/Logging/OutputMode.cs
@@ -49,7 +50,7 @@ Console
 | `Debug`, `Info`, `Warning`, `Error` | Message | Framework message lines with a `DEBUG:` / `WARN:` / `ERROR:` prefix for non-info levels. |
 | `Section` | Section | Run-level structure: blank line, title, dash rule, blank line. |
 | `ActionStarted(TestExecutionStep)` | ActionStarted | A single structured kwargs line describing the action about to run, comma-separated in the same shape for both modes. |
-| `LocatorResolution(TestExecutionStep, IReadOnlyList<LocatorCandidate>, LocatorCandidate? selected)` | LocatorResolution | The locator candidate table and the selected locator. |
+| `LocatorResolution(TestExecutionStep, IReadOnlyList<Locator>, Locator? selected)` | LocatorResolution | The locator candidate table and the selected locator. |
 | `ActionCompleted(TestExecutionStep)` | ActionCompleted | A completion line for the action. |
 | `ActionFailed(TestExecutionStep, string reason)` | ActionFailed | A failure line for the action with the failure reason. |
 
@@ -74,8 +75,8 @@ public sealed record LogEntry(
     LogKind Kind,
     string? Message = null,
     TestExecutionStep? Step = null,
-    IReadOnlyList<LocatorCandidate>? LocatorCandidates = null,
-    LocatorCandidate? SelectedLocator = null);
+    IReadOnlyList<Locator>? LocatorCandidates = null,
+    Locator? SelectedLocator = null);
 ```
 
 One record carries all kinds. `ActionFailed` puts its reason in `Message`. There is no log-event class per concept.
@@ -86,7 +87,7 @@ The execution methods take the existing `TestExecutionStep` directly. It already
 
 ## Locator candidates
 
-`Application.Locators.LocatorCandidate(string Strategy, string Value)` is the structured handoff for locator information. The strategy is a plain string, so the logger never couples to Playwright or Appium locator classes, nor to the `Domain.Entities.Enums.LocatorAttribute` SmartEnum. The selected locator is the same record, reusing one shape for candidate rows and the selected line.
+`SharedKernel.Locators.Locator(LocatorStrategy Strategy, string Value, string? Name = null)` is the structured handoff for locator information. The strategy is a platform-neutral enum from `SharedKernel.Locators`, so the logger never couples to Playwright or Appium locator classes. The selected locator is the same record, reusing one shape for candidate rows and the selected line; when `Name` is set (Role), the renderer appends it to the value. See [Elements and Locators](./elements-and-locators.md).
 
 ## Output mode
 

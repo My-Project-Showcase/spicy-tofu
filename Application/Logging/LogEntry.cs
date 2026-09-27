@@ -1,6 +1,6 @@
-using Application.Locators;
-
 using Domain.Entities.Execution;
+
+using SharedKernel.Locators;
 
 namespace Application.Logging;
 
@@ -28,5 +28,5 @@ public sealed record LogEntry(
     LogKind Kind,
     string? Message = null,
     TestExecutionStep? Step = null,
-    IReadOnlyList<LocatorCandidate>? LocatorCandidates = null,
-    LocatorCandidate? SelectedLocator = null);
+    IReadOnlyList<Locator>? LocatorCandidates = null,
+    Locator? SelectedLocator = null);

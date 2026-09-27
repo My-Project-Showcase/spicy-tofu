@@ -1,3 +1,10 @@
+## [2026-09-27] update | Element repository and locator resolver
+
+- Added the element and locator layer: `SharedKernel` element and locator models plus MUI, Shadcn, and Syncfusion component libraries; `Application` `IElementRepository`, `ILocatorResolver`, and `IResolvedElement`; and `Infrastructure` `SampleElementRepository`, `WebLocatorResolver`, `MobileLocatorResolver`, `WebResolvedElement`, and `MobileResolvedElement`, with `ResolveAsync` on `IWebPage` and `IMobileSession`.
+- Replaced `Domain.Entities.Enums.LocatorAttribute` and `Application.Locators.LocatorCandidate` with the `SharedKernel.Locators.Locator` model; logging now uses it.
+- `ClickEvent` now resolves the step's element through the repository and resolver.
+- Added `docs/technical/elements-and-locators.md`; updated the automation, architecture, domain, logging, DI, runtime, and setup pages, plus `platform-notes.md`, `known-issues-and-discrepancies.md`, `design-decisions.md`, `index.md`, the root `README.md`, `AGENTS.md`, and `CHANGELOG.md`.
+
 ## [2026-09-27] update | Using directive order
 
 - Defined a fixed using-directive order: external (`System.*` first, then Microsoft and third-party), then `Application`, `Domain`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`, with one blank line between groups.

@@ -2,7 +2,7 @@
 
 Spicy-Tofu is a cross-platform test automation framework for web and mobile, written in C# on .NET 9. Test cases are defined in JSON, run through a single shared core, and driven by [Playwright](https://playwright.dev/) on web or [Appium](https://appium.io/) on mobile.
 
-**Status:** pre-alpha. The project is at version 0.1.0 and has not been released. Configuration, composition, test loading, logging, and the automation driver lifecycle work end to end. The path that turns a loaded step into an actual browser or device interaction does not exist yet. See [Current Status](#current-status).
+**Status:** pre-alpha. The project is at version 0.1.0 and has not been released. Configuration, composition, test loading, logging, element and locator resolution, and the automation driver lifecycle work end to end. The click or fill interaction against a live page or device does not exist yet. See [Current Status](#current-status).
 
 ## Overview
 
@@ -21,10 +21,11 @@ The project is pre-alpha, so treat the model and the interfaces as the design su
 
 ### Implemented
 
-- A five-project .NET 9 solution with dependencies pointing inward and `Domain` depending on nothing.
+- A six-project .NET 9 solution with dependencies pointing inward and `Domain` depending on nothing.
 - JSON test definitions loaded from `Projects:RootDirectory` and deserialized into the `Test` model with case-insensitive property matching.
 - Flattening of the `Test` / `Workflow` / `TestSteps` hierarchy into `TestExecutionStep` records.
 - Event dispatch: `RunService` resolves each step's action to an `ITestEvent` through `IEventRegistry` and reports the returned `TestExecutionResult` through `ILogger`.
+- An element and locator layer: application element definitions behind `IElementRepository`, platform-neutral `Element` and `Locator` models plus reusable MUI, Shadcn, and Syncfusion component locators in `SharedKernel`, and ordered locator resolution with fallback behind `ILocatorResolver`.
 - An execution-oriented logging pipeline: an `ILogger` facade, a `LogEntry` handoff, and an `IPrintStrategy` rendering seam with separate Interactive and CI layouts.
 - An `IAutomationDriver` lifecycle owned by `RunService`, with start before the load and stop in a `finally` block.
 - Composition-time platform selection in `AddAutomation`, which fails fast on a missing or unknown `SpicyTofu:Platform`.
@@ -34,9 +35,9 @@ The project is pre-alpha, so treat the model and the interfaces as the design su
 
 ### Not yet implemented
 
-- **Executing steps against a platform.** `RunService` dispatches each step to its `ITestEvent` through `IEventRegistry`, but the only handler today (`ClickEvent`) is a stub that returns success without touching the driver. Nothing interacts with a page or a screen.
-- **Interaction surface.** `IWebPage` is an empty marker interface, `IMobileSession` exposes only `Name`, and there are no click, fill, navigate, or read operations anywhere in the contracts.
-- **Locator resolution.** The `LocatorAttribute` SmartEnum and the `ILogger.LocatorResolution` rendering path exist, but no code turns a step's `Attribute` and `Target` into a platform locator.
+- **Executing actions against a platform.** `ClickEvent` resolves its element through `IElementRepository` and `ILocatorResolver`, but the click itself is a stub and no other action events exist. A test containing a non-click step fails at the event registry.
+- **Interaction surface.** `IWebPage` and `IMobileSession` expose locator resolution only. There are no click, fill, navigate, or read operations anywhere in the contracts.
+- **Locator resolution on a real page.** The resolver, repository, and component libraries exist, but the framework has no navigation step, so resolution runs against a blank page during a run.
 - **Assertions.** There is no assertion model, and nothing evaluates an expected result.
 - **Result reporting.** Each executed step produces a `TestExecutionResult`, which `RunService` reports through `ILogger` (`ActionCompleted` on success, `ActionFailed` on failure). There is no aggregate result, no pass or fail state, and no report output.
 - **Parallelism and retries.** `TestExecution:Parallel`, `Workers`, and `Retries` are bound to options but never read by the framework.
@@ -94,6 +95,8 @@ appsettings.json + TOFU_ environment variables
                          │
                          ▼
              ITestEvent.ExecuteAsync(step)
+             resolves the element via
+             IElementRepository + ILocatorResolver
              returns a TestExecutionResult
                          │
                          ▼
@@ -114,6 +117,7 @@ What each stage is for:
 - **`IJsonService`** reads and deserializes the JSON files and returns the loaded tests. It does not flatten or execute.
 - **`TestsLoadedHandler`** flattens the nested test hierarchy into a flat sequence of `TestExecutionStep` records.
 - **`IEventRegistry`** resolves each step's action name to the `ITestEvent` that executes it, and `RunService` reports the returned `TestExecutionResult` through the logger.
+- **`ITestEvent`** resolves the step's element through `IElementRepository` and `ILocatorResolver` before reporting its result. The event holds no XPath, application knowledge, or platform types.
 - **Logging** reports progress as plain text through the `ILogger` and `IPrintStrategy` pair.
 
 The load and the driver lifecycle are coupled deliberately: the driver starts first, and the stop call sits in a `finally` block so it runs on every path, including failures and cancellation.
@@ -139,11 +143,11 @@ Test
 A step is a flat action description:
 
 - **`Type`** is the action to perform, for example `Click` or `Fill`.
-- **`Attribute`** is the locator strategy used to find the element, for example `Id`, `XPath`, or `AccessibilityId`.
-- **`Target`** identifies the element the locator applies to.
+- **`Attribute`** is the logical element label the step refers to, for example `Username` or `LoginButton`.
+- **`Target`** identifies the element, for example `UsernameInput`.
 - **`Value`** carries the data for the action.
 
-`Type` and `Attribute` are free-form strings today. The set of recognised action types, and the mapping from an attribute to a concrete Playwright or Appium locator, are not yet defined in code, so the values below are illustrative rather than a specified vocabulary. `Domain.Entities.Enums.LocatorAttribute` lists the intended attribute values (`Id`, `Name`, `Class`, `Css`, `XPath`, `Text`, `AccessibilityId`) and flags which ones are mobile-supported, but nothing consumes it yet.
+`Type`, `Attribute`, and `Target` are free-form strings. `Type` is resolved to an action event through `IEventRegistry` (only `click` is registered today). `Attribute` and `Target` are resolved to an application element through `IElementRepository`, which maps them to an `Element` with ordered locator candidates; `ILocatorResolver` then resolves the element on the running platform. The locator strategies are `Role`, `Label`, `Placeholder`, `Text`, `TestId`, `Id`, `Name`, `Css`, `XPath`, and `AccessibilityId`.
 
 A representative file, illustrative only, since the repository does not yet ship a sample test definition:
 
@@ -158,14 +162,14 @@ A representative file, illustrative only, since the repository does not yet ship
       "Steps": [
         {
           "Type": "Fill",
-          "Attribute": "Id",
-          "Target": "username",
+          "Attribute": "Username",
+          "Target": "UsernameInput",
           "Value": "alice"
         },
         {
           "Type": "Click",
-          "Attribute": "Id",
-          "Target": "login-submit",
+          "Attribute": "LoginButton",
+          "Target": "LoginButton",
           "Value": ""
         }
       ]
@@ -186,15 +190,16 @@ The solution follows Domain Driven Design with a shared core and two platform ex
 
 | Project | Type | References | Responsibility |
 |---|---|---|---|
-| `Domain` | class library | none | The framework's own domain: the test case model, locator attributes, execution records, and the configuration option classes |
-| `Application` | class library | `Domain` | Use-case seams: the automation driver contracts, the logging facade, and the runtime service interfaces |
-| `Infrastructure` | class library | `Application`, `Domain` | Outward-facing concerns: the Playwright and Appium implementations, dependency injection, the JSON loader, the run service, and console logging |
-| `Web` | executable | all three core projects | The web composition root and entry point |
-| `Mobile` | executable | all three core projects | The mobile composition root and entry point |
+| `Domain` | class library | none | The framework's own domain: the test case model, execution records, and the configuration option classes |
+| `SharedKernel` | class library | none | Reusable, platform-independent element, locator, and component-library definitions |
+| `Application` | class library | `Domain`, `SharedKernel` | Use-case seams: the automation driver contracts, the element repository and locator resolver interfaces, the logging facade, and the runtime service interfaces |
+| `Infrastructure` | class library | `Application`, `Domain`, `SharedKernel` | Outward-facing concerns: the Playwright and Appium implementations, dependency injection, the JSON loader, the run service, the element repository, and console logging |
+| `Web` | executable | `Application`, `Domain`, `Infrastructure` | The web composition root and entry point |
+| `Mobile` | executable | `Application`, `Domain`, `Infrastructure` | The mobile composition root and entry point |
 
 Two points are worth calling out because they are easy to get wrong:
 
-- **Dependencies point inward.** `Domain` depends on nothing, `Application` depends only on `Domain`, and the executables sit outermost. Platform details never leak toward the core.
+- **Dependencies point inward.** `Domain` depends on nothing, `Application` depends on `Domain` and `SharedKernel`, and the executables sit outermost. Platform details never leak toward the core.
 - **The platform implementations live in `Infrastructure`, not in `Web` and `Mobile`.** Both `Microsoft.Playwright` and `Appium.WebDriver` are referenced by `Infrastructure` alone. The `Web` and `Mobile` projects are thin composition roots, which is why they are almost identical.
 
 The four DDD layers are `Domain`, `Application`, `Infrastructure`, and `Presentation`. There is no separate `Presentation` project: the `Web` and `Mobile` executables are the presentation layer.
@@ -344,9 +349,10 @@ For every key, its default, and which assembly binds it, see [Configuration](doc
 
 ```text
 spicy-tofu/
-├── Domain/                 test case model, locator attributes, configuration option classes
-├── Application/            automation contracts, logging facade, runtime service interfaces
-├── Infrastructure/         Playwright and Appium implementations, DI, JSON loading, console logging
+├── Domain/                 test case model, execution records, configuration option classes
+├── SharedKernel/           element, locator, and component-library definitions
+├── Application/            automation contracts, element and locator interfaces, logging facade, runtime service interfaces
+├── Infrastructure/         Playwright and Appium implementations, DI, JSON loading, element repository, console logging
 ├── Web/                    web composition root and entry point, web appsettings.json
 ├── Mobile/                 mobile composition root and entry point, mobile appsettings.json
 ├── docs/
@@ -359,7 +365,7 @@ spicy-tofu/
 └── README.md               this file
 ```
 
-The five projects sit at the top level in same-named folders. The Playwright and Appium implementations live under `Infrastructure/Automation/`, split into `Web` and `Mobile` subfolders, not under the `Web` and `Mobile` projects.
+The six projects sit at the top level in same-named folders. The Playwright and Appium implementations live under `Infrastructure/Automation/`, split into `Web` and `Mobile` subfolders, not under the `Web` and `Mobile` projects.
 
 ## Getting Started
 
@@ -478,7 +484,7 @@ The reasoning behind each of these is recorded in [Design Decisions](docs/wiki/d
 
 ## Known Limitations
 
-- **Steps are not really executed.** A run loads, flattens, and dispatches steps to their `ITestEvent`, but the only handler (`ClickEvent`) is a stub that returns success. Nothing interacts with a browser or a device.
+- **Actions are not really executed.** A run loads, flattens, and dispatches steps to their `ITestEvent`, which resolves the element through `IElementRepository` and `ILocatorResolver`, but `ClickEvent` does not perform the click and no other action events exist. Nothing interacts with a browser or a device.
 - **No assertions or result reporting.** There is no pass or fail state, and no report output beyond console text.
 - **No test projects.** `dotnet test` is a no-op, and the framework itself is untested.
 - **The format check is not green.** `dotnet format spicy-tofu.sln --verify-no-changes` reports violations in older files.

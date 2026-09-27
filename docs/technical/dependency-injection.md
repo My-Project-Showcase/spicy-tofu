@@ -4,6 +4,11 @@ updated: 2026-09-27
 sources:
   - ../../Infrastructure/Extensions/DependencyInjection.cs
   - ../../Application/Automation/IAutomationDriver.cs
+  - ../../Application/Elements/IElementRepository.cs
+  - ../../Application/Locators/ILocatorResolver.cs
+  - ../../Infrastructure/Elements/SampleElementRepository.cs
+  - ../../Infrastructure/Automation/Web/WebLocatorResolver.cs
+  - ../../Infrastructure/Automation/Mobile/MobileLocatorResolver.cs
   - ../../Web/Extension/WebExtensions.cs
   - ../../Mobile/Extensions/MobileExtensions.cs
   - ../../Web/Program.cs
@@ -23,8 +28,8 @@ The web and mobile executables are the composition roots. Both read configuratio
 `Web/Program.cs` builds the generic host with `Host.CreateDefaultBuilder(args)`, sets the content root to `AppContext.BaseDirectory` so `appsettings.json` is read from the build output folder regardless of the working directory, and calls, in order:
 
 1. `AddWebExtensions` (from `WebExtensions`): loads `appsettings.json`, overlays `TOFU_`-prefixed environment variables, binds `SpicyTofuConfig`, `Projects`, `PlaywrightConfig`, and `TestExecution`.
-2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which binds the `Logging` section and registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), `TestsLoadedHandler`, and `IEventRegistry` (`EventService`). `AddServices` then calls `AddEvents`, which registers the `ITestEvent` implementations (`ClickEvent` today).
-3. `AddAutomation` (from `Infrastructure.Extensions`): the single platform-selection point.
+2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which binds the `Logging` section and registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), `TestsLoadedHandler`, `IEventRegistry` (`EventService`), and `IElementRepository` (`SampleElementRepository`). `AddServices` then calls `AddEvents`, which registers the `ITestEvent` implementations (`ClickEvent` today).
+3. `AddAutomation` (from `Infrastructure.Extensions`): the single platform-selection point. It registers the platform driver and the platform `ILocatorResolver` (`WebLocatorResolver` for web, `MobileLocatorResolver` for mobile).
 
 `Program.cs` owns the host with `using IHost host = ...` so the host and its singleton services are disposed when the run ends (see [Driver Lifecycle and Host Disposal](#driver-lifecycle-and-host-disposal)). After the host is built it resolves `IRunService` from the container and calls `RunAsync()`, which drives the runtime pipeline. See [Runtime Pipeline](./runtime-pipeline.md).
 
@@ -32,8 +37,8 @@ The web and mobile executables are the composition roots. Both read configuratio
 
 `AddAutomation` lives in `Infrastructure.Extensions.DependencyInjection`. It is the only place in the codebase that reads `SpicyTofu:Platform` and the only place that branches on platform. It reads the value once during service registration and registers exactly one platform:
 
-- When the value is `Web` (case-insensitive): registers `BrowserHost` (singleton), `WebDriver` (singleton), and forwards `IWebDriver` and `IAutomationDriver` to that same `WebDriver` instance.
-- When the value is `Mobile` (case-insensitive): registers `MobileHost` (singleton), `MobileDriver` (singleton), and forwards `IMobileDriver` and `IAutomationDriver` to that same `MobileDriver` instance.
+- When the value is `Web` (case-insensitive): registers `BrowserHost` (singleton), `WebDriver` (singleton), forwards `IWebDriver` and `IAutomationDriver` to that same `WebDriver` instance, and registers `ILocatorResolver` as `WebLocatorResolver` (singleton).
+- When the value is `Mobile` (case-insensitive): registers `MobileHost` (singleton), `MobileDriver` (singleton), forwards `IMobileDriver` and `IAutomationDriver` to that same `MobileDriver` instance, and registers `ILocatorResolver` as `MobileLocatorResolver` (singleton).
 - When the value is missing, empty, or anything else: throws `InvalidOperationException` with a message naming the invalid value. A bad platform fails at composition time, before any test execution starts, and never falls back to a default platform.
 
 Each forward uses `sp => sp.GetRequiredService<WebDriver>()` (or `MobileDriver`), so the concrete driver, its platform interface, and `IAutomationDriver` all resolve to the same singleton instance. A second `AddSingleton<Interface, Implementation>` registration would create a second instance with its own session registry, so forwards are used instead.
@@ -47,8 +52,8 @@ See [Automation Driver Contract](./automation-driver-contract.md) for the interf
 `Mobile/Program.cs` builds the generic host with `Host.CreateDefaultBuilder(args)`, sets the content root to `AppContext.BaseDirectory` (same reason as the web entry point), and calls, in order:
 
 1. `AddMobileDependencies` (from `MobileExtensions`): loads configuration, overlays `TOFU_` variables, and binds `SpicyTofuConfig`, `Projects`, `TestExecution`, and `AppiumConfig`. Note it binds the options twice (once in `AddConfigProperties` called directly, once through `AddEnvCompatibility`, which builds a merged configuration and re-binds), which is redundant but harmless.
-2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): the same passthrough as the web entry point, including the `IEventRegistry` and `AddEvents` registrations.
-3. `AddAutomation` (from `Infrastructure.Extensions`): the same single platform-selection point as web.
+2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): the same passthrough as the web entry point, including the `IEventRegistry`, `AddEvents`, and `IElementRepository` registrations.
+3. `AddAutomation` (from `Infrastructure.Extensions`): the same single platform-selection point as web; it registers the mobile driver and `MobileLocatorResolver`.
 
 Like the web entry point, the mobile program owns the host with `using IHost host = ...`, then resolves `IRunService` and calls `RunAsync()`. The only difference between the two executables is which `IAutomationDriver` `AddAutomation` registers, which is driven by their `SpicyTofu:Platform` values. Selection and execution flow are shared.
 
@@ -76,14 +81,17 @@ Driver start/stop and host disposal are separate responsibilities.
 | `TestsLoadedHandler` | `AddServices` | singleton | always |
 | `IEventRegistry` / `EventService` | `AddServices` | singleton | always |
 | `ITestEvent` / `ClickEvent` | `AddEvents` (called by `AddServices`) | singleton | always |
+| `IElementRepository` / `SampleElementRepository` | `AddServices` | singleton | always |
 | `BrowserHost` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `WebDriver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `IWebDriver` (forward to `WebDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `IAutomationDriver` (forward to `WebDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
+| `ILocatorResolver` / `WebLocatorResolver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `MobileHost` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | `MobileDriver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | `IMobileDriver` (forward to `MobileDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | `IAutomationDriver` (forward to `MobileDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
+| `ILocatorResolver` / `MobileLocatorResolver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | Config option bindings | platform extension | - | always |
 
 Only one `IAutomationDriver` registration exists per process, matching the selected platform.
@@ -92,6 +100,7 @@ Only one `IAutomationDriver` registration exists per process, matching the selec
 
 - [Configuration](./configuration.md)
 - [Automation Driver Contract](./automation-driver-contract.md)
+- [Elements and Locators](./elements-and-locators.md)
 - [Web Automation](./web-automation.md)
 - [Mobile Automation](./mobile-automation.md)
 - [Domain Layer](./domain-layer.md)

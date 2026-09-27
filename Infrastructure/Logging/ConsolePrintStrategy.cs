@@ -1,11 +1,12 @@
 using System.Text;
 using Microsoft.Extensions.Options;
 
-using Application.Locators;
 using Application.Logging;
 
 using Domain.Entities.Execution;
 using Domain.Runtime.Environment.Configuration;
+
+using SharedKernel.Locators;
 
 namespace Infrastructure.Logging;
 
@@ -151,7 +152,7 @@ public sealed class ConsolePrintStrategy : IPrintStrategy
         var selected = entry.SelectedLocator;
         if (selected is not null)
         {
-            lines.AddRange(WrapLine($"Selected: {selected.Strategy}, {selected.Value}", _config.MaxLineWidth, string.Empty, ContinuationIndent));
+            lines.AddRange(WrapLine($"Selected: {selected.Strategy}, {LocatorValue(selected)}", _config.MaxLineWidth, string.Empty, ContinuationIndent));
         }
         else if (entry.LocatorCandidates is not null && entry.LocatorCandidates.Count > 0)
         {
@@ -161,7 +162,7 @@ public sealed class ConsolePrintStrategy : IPrintStrategy
         return lines;
     }
 
-    private List<string> FormatLocatorTable(IReadOnlyList<LocatorCandidate>? candidates)
+    private List<string> FormatLocatorTable(IReadOnlyList<Locator>? candidates)
     {
         if (candidates is null || candidates.Count == 0)
         {
@@ -170,11 +171,14 @@ public sealed class ConsolePrintStrategy : IPrintStrategy
 
         var headers = new List<string> { "Strategy", "Locator" };
         var rows = candidates
-            .Select(candidate => (IReadOnlyList<string>)new string[] { candidate.Strategy, candidate.Value })
+            .Select(candidate => (IReadOnlyList<string>)new string[] { candidate.Strategy.ToString(), LocatorValue(candidate) })
             .ToList();
 
         return FormatTable(headers, rows);
     }
+
+    private static string LocatorValue(Locator locator) =>
+        locator.Name is null ? locator.Value : $"{locator.Value} (name: {locator.Name})";
 
     private List<string> FormatTable(List<string> headers, IReadOnlyList<IReadOnlyList<string>> rows)
     {

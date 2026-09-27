@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Application.Automation;
 using Application.Automation.Mobile;
 using Application.Automation.Web;
+using Application.Elements;
+using Application.Locators;
 using Application.Logging;
 using Application.Runtime.JsonService;
 using Application.Runtime.RunService;
@@ -14,6 +16,7 @@ using Domain.Runtime.Environment.Configuration;
 
 using Infrastructure.Automation.Mobile;
 using Infrastructure.Automation.Web;
+using Infrastructure.Elements;
 using Infrastructure.Events;
 using Infrastructure.Logging;
 using Infrastructure.Runtime.EventsService;
@@ -45,6 +48,7 @@ public static class DependencyInjection
             services.AddSingleton<WebDriver>();
             services.AddSingleton<IWebDriver>(sp => sp.GetRequiredService<WebDriver>());
             services.AddSingleton<IAutomationDriver>(sp => sp.GetRequiredService<WebDriver>());
+            services.AddSingleton<ILocatorResolver, WebLocatorResolver>();
         }
         else if (string.Equals(platform, "Mobile", StringComparison.OrdinalIgnoreCase))
         {
@@ -52,6 +56,7 @@ public static class DependencyInjection
             services.AddSingleton<MobileDriver>();
             services.AddSingleton<IMobileDriver>(sp => sp.GetRequiredService<MobileDriver>());
             services.AddSingleton<IAutomationDriver>(sp => sp.GetRequiredService<MobileDriver>());
+            services.AddSingleton<ILocatorResolver, MobileLocatorResolver>();
         }
         else
         {
@@ -75,6 +80,7 @@ public static class DependencyInjection
         service.AddSingleton<TestsLoadedHandler>();
         service.AddSingleton<IRunService, RunService>();
         service.AddSingleton<IEventRegistry, EventService>();
+        service.AddSingleton<IElementRepository, SampleElementRepository>();
         service.AddEvents();
         return service;
     }

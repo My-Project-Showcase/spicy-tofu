@@ -1,6 +1,6 @@
-using Application.Locators;
-
 using Domain.Entities.Execution;
+
+using SharedKernel.Locators;
 
 namespace Application.Logging;
 
@@ -18,7 +18,7 @@ public interface ILogger
 
     void ActionStarted(TestExecutionStep executionStep);
 
-    void LocatorResolution(TestExecutionStep executionStep, IReadOnlyList<LocatorCandidate> candidates, LocatorCandidate? selected = null);
+    void LocatorResolution(TestExecutionStep executionStep, IReadOnlyList<Locator> candidates, Locator? selected = null);
 
     void ActionCompleted(TestExecutionStep executionStep);
 

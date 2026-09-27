@@ -1,10 +1,11 @@
 using Microsoft.Extensions.Options;
 
-using Application.Locators;
 using Application.Logging;
 
 using Domain.Entities.Execution;
 using Domain.Runtime.Environment.Configuration;
+
+using SharedKernel.Locators;
 
 namespace Infrastructure.Logging;
 
@@ -31,7 +32,7 @@ public sealed class Logger : ILogger
 
     public void ActionStarted(TestExecutionStep executionStep) => WriteExecution(LogKind.ActionStarted, executionStep);
 
-    public void LocatorResolution(TestExecutionStep executionStep, IReadOnlyList<LocatorCandidate> candidates, LocatorCandidate? selected = null)
+    public void LocatorResolution(TestExecutionStep executionStep, IReadOnlyList<Locator> candidates, Locator? selected = null)
     {
         if (_threshold > LogLevel.Info)
         {

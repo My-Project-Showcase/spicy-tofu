@@ -19,6 +19,14 @@ sources:
   - ../../Infrastructure/Runtime/RunService/RunService.cs
   - ../../Infrastructure/Runtime/JsonService/JsonService.cs
   - ../../Infrastructure/Runtime/EventService/EventService.cs
+  - ../../Infrastructure/Elements/SampleElementRepository.cs
+  - ../../Infrastructure/Automation/Web/WebLocatorResolver.cs
+  - ../../Infrastructure/Automation/Mobile/MobileLocatorResolver.cs
+  - ../../Application/Elements/IElementRepository.cs
+  - ../../Application/Locators/ILocatorResolver.cs
+  - ../../SharedKernel/Elements/Element.cs
+  - ../../SharedKernel/Locators/Locator.cs
+  - ../../SharedKernel/Components/Mui/MuiLocators.cs
   - ../../Domain/Events/ITestEvent.cs
   - ../../Domain/Events/EventsRegistry/IEventRegistry.cs
 ---
@@ -54,6 +62,18 @@ The reasoning: platform selection is a wiring concern, not a runtime concern. Re
 `JsonService` only loads and deserializes tests and returns them; it does not raise an event and does not know about execution results. `RunService` owns orchestration: it loads, flattens through `TestsLoadedHandler`, resolves each step's action to an `ITestEvent` through `IEventRegistry`, and reports the returned `TestExecutionResult` through `ILogger`.
 
 An earlier design had `JsonService` raise a `TestsLoaded` event that `RunService` subscribed to. That indirection added nothing: `LoadJson` already returns the loaded tests, so a subscriber and a matching unsubscribe were pure ceremony, and the event also allowed loading to trigger execution outside the run service. Removing it keeps a single orchestrator and keeps the loader a pure data-loading concern.
+
+## The element repository is the system-under-test boundary
+
+Events are generic: `ClickEvent` knows only that it must click the element a step names. Application-specific knowledge (which element `LoginButton` is, and how it is located) lives behind `IElementRepository`, the only place the framework meets a specific application's UI. This keeps an event reusable across unrelated applications; only the repository changes. See [Elements and Locators](../technical/elements-and-locators.md).
+
+## Reusable component knowledge lives in SharedKernel
+
+Component-library locators (MUI, Shadcn, Syncfusion) are reusable and platform-independent, so they live in `SharedKernel/Components`, one static class per library. They describe what can identify a component, not how Playwright or Appium executes it. The application element repository composes them into concrete elements. `SharedKernel` references no Playwright or Appium types.
+
+## The resolver owns locator selection
+
+`ILocatorResolver` owns candidate ordering and fallback: it walks an element's locator candidates and returns the first that resolves on the running platform. Events never see a locator strategy, a fallback loop, or XPath; they ask the resolver and report the outcome. Platform translation (Playwright `GetByRole`/`GetByTestId`, Appium `MobileBy`) lives in the platform `WebPage`/`MobileSession` implementations.
 
 ## Timeout injection through options
 

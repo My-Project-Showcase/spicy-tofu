@@ -1,6 +1,6 @@
 ---
 title: Automation Driver Contract
-updated: 2026-09-23
+updated: 2026-09-27
 sources:
   - ../../Application/Application.csproj
   - ../../Application/Automation/IAutomationDriver.cs
@@ -11,6 +11,9 @@ sources:
   - ../../Application/Automation/Mobile/IMobileDriver.cs
   - ../../Application/Automation/Mobile/IMobileSession.cs
   - ../../Application/Automation/Mobile/MobileContextOptions.cs
+  - ../../Application/Elements/IResolvedElement.cs
+  - ../../Application/Locators/ILocatorResolver.cs
+  - ../../SharedKernel/Locators/Locator.cs
 ---
 
 # Automation Driver Contract
@@ -38,7 +41,11 @@ The lifecycle methods `StartAsync` and `StopAsync` come from `IAutomationDriver`
 
 ## IWebPage
 
-`Application.Automation.Web.IWebPage`: an empty marker interface. The web implementation wraps a Playwright `IPage`. It is the contract seam that lets application code depend on a page without referencing Playwright. Behavioral surface is not yet defined.
+`Application.Automation.Web.IWebPage` is the contract seam that lets application code depend on a page without referencing Playwright. It exposes one method:
+
+- `Task<IResolvedElement?> ResolveAsync(Locator locator)`: try to resolve a single platform-neutral locator against the page, returning null when it does not match.
+
+The web implementation (`WebPage`) wraps a Playwright `IPage` and builds native locators from the strategy. See [Elements and Locators](./elements-and-locators.md).
 
 ## IWebSession
 
@@ -65,8 +72,13 @@ Like `IWebDriver`, the lifecycle methods come from `IAutomationDriver` and are n
 `Application.Automation.Mobile.IMobileSession`:
 
 - `string Name`
+- `Task<IResolvedElement?> ResolveAsync(Locator locator)`: try to resolve a single platform-neutral locator against the session, returning null when it does not match.
 
-It does not expose a page or screen yet. The implementation wraps an Appium driver. Behavioral surface is not yet defined.
+The implementation wraps an Appium driver and builds native `By` locators from the strategy. See [Elements and Locators](./elements-and-locators.md).
+
+## IResolvedElement
+
+`Application.Elements.IResolvedElement` is the platform-neutral result of resolving a locator: it exposes the matched `Locator`. The platform wrappers (`WebResolvedElement`, `MobileResolvedElement`) also hold the native handle for future action code. See [Elements and Locators](./elements-and-locators.md).
 
 ## MobileContextOptions
 
@@ -80,6 +92,7 @@ Platform selection happens once at composition time in `AddAutomation`, which re
 
 - [Architecture Overview](./architecture-overview.md)
 - [Dependency Injection](./dependency-injection.md)
+- [Elements and Locators](./elements-and-locators.md)
 - [Web Automation](./web-automation.md)
 - [Mobile Automation](./mobile-automation.md)
 - [Design Decisions](../wiki/design-decisions.md)

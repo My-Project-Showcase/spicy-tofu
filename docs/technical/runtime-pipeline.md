@@ -13,6 +13,9 @@ sources:
   - ../../Domain/Events/EventsRegistry/IEventRegistry.cs
   - ../../Domain/Entities/Execution/TestExecutionStep.cs
   - ../../Domain/Entities/Execution/TestExecutionResult.cs
+  - ../../Application/Elements/IElementRepository.cs
+  - ../../Application/Locators/ILocatorResolver.cs
+  - ../../Infrastructure/Events/ClickEvent.cs
 ---
 
 # Runtime Pipeline
@@ -44,7 +47,7 @@ The framework turns test case JSON files into executed steps in a single linear 
 
 - `TestExecutionStep`: a record in `Domain.Entities.Execution` holding the `Test`, `Workflow`, and `TestSteps` instance produced by the flatten. It describes what should be executed.
 - `IEventRegistry` (`EventService`): resolves an action name (`step.Step.Type`) to its `ITestEvent`. `EventService` is built from every registered `ITestEvent`, keyed by the `[Action(...)]` attribute name, case-insensitively. An unknown action throws `InvalidOperationException`.
-- `ITestEvent`: executes one step and returns a `TestExecutionResult`. `ClickEvent` is the only implementation today; it is registered with `[Action("click")]`.
+- `ITestEvent`: executes one step and returns a `TestExecutionResult`. `ClickEvent` is the only implementation today; it is registered with `[Action("click")]`. Inside `ExecuteAsync`, an event resolves the step's logical element through `IElementRepository` and `ILocatorResolver`, then reports the result. The event itself holds no XPath, application knowledge, or platform types. See [Elements and Locators](./elements-and-locators.md).
 - `TestExecutionResult`: describes the outcome of one executed step (`IsSuccess`, `Error`, `Locator`).
 - `RunService`: orchestrates the run. It loads, flattens, resolves, executes, and reports. It depends on `IEventRegistry`, not on concrete events, and owns the driver lifecycle.
 - `IAutomationDriver`: `StartAsync` before the load, `StopAsync` in a `finally`. See [Automation Driver Contract](./automation-driver-contract.md).
@@ -62,5 +65,6 @@ Steps run sequentially, in the order the flatten produces them (test, then workf
 
 - [Domain Layer](./domain-layer.md)
 - [Dependency Injection](./dependency-injection.md)
+- [Elements and Locators](./elements-and-locators.md)
 - [Configuration](./configuration.md)
 - [Logging](./logging.md)

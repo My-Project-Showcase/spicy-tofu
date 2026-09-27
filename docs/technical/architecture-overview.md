@@ -1,11 +1,12 @@
 ---
 title: Architecture Overview
-updated: 2026-09-20
+updated: 2026-09-27
 sources:
   - ../../spicy-tofu.sln
   - ../../Domain/Domain.csproj
   - ../../Application/Application.csproj
   - ../../Infrastructure/Infrastructure.csproj
+  - ../../SharedKernel/SharedKernel.csproj
   - ../../Web/Web.csproj
   - ../../Mobile/Mobile.csproj
 ---
@@ -16,13 +17,14 @@ Spicy-Tofu is a cross-platform test automation framework for web (Playwright) an
 
 ## Solution layout
 
-The solution `spicy-tofu.sln` contains five projects, each in a same-named top-level folder.
+The solution `spicy-tofu.sln` contains six projects, each in a same-named top-level folder.
 
 | Project | Type | References | Role |
 |---|---|---|---|
 | `Domain` | class library | none | Framework domain models and configuration option classes |
-| `Application` | class library | `Domain` | Automation contracts and orchestration seams |
-| `Infrastructure` | class library | `Application`, `Domain` | Outward-facing concerns and the Playwright and Appium implementations of the platform contracts |
+| `SharedKernel` | class library | none | Reusable, platform-independent element, locator, and component-library definitions |
+| `Application` | class library | `Domain`, `SharedKernel` | Automation contracts and orchestration seams |
+| `Infrastructure` | class library | `Application`, `Domain`, `SharedKernel` | Outward-facing concerns and the Playwright and Appium implementations of the platform contracts |
 | `Web` | executable | `Application`, `Domain`, `Infrastructure` | Web composition root |
 | `Mobile` | executable | `Application`, `Domain`, `Infrastructure` | Mobile composition root and entry point |
 
@@ -51,7 +53,8 @@ Note that the Playwright implementation lives in `Infrastructure.Automation.Web`
 
 ## Package references
 
-- `Domain`: `Ardalis.SmartEnum` 8.2.0.
+- `Domain`: no package references.
+- `SharedKernel`: no package references. It holds platform-independent element, locator, and component-library definitions.
 - `Application`: `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12, `Microsoft.Extensions.Options` 10.0.12.
 - `Infrastructure`: `Microsoft.Extensions.Configuration`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Hosting`, `Microsoft.Extensions.Options.ConfigurationExtensions` (all 10.0.12), `Microsoft.Playwright` 1.62.0, and `Appium.WebDriver` 8.3.2.
 - `Web`: `Microsoft.Extensions.Configuration`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Hosting`, `Microsoft.Extensions.Options.ConfigurationExtensions` (all 10.0.12).
@@ -66,6 +69,7 @@ Note that the Playwright implementation lives in `Infrastructure.Automation.Web`
 - [Configuration](./configuration.md)
 - [Dependency Injection](./dependency-injection.md)
 - [Automation Driver Contract](./automation-driver-contract.md)
+- [Elements and Locators](./elements-and-locators.md)
 - [Web Automation](./web-automation.md)
 - [Mobile Automation](./mobile-automation.md)
 - [Domain Layer](./domain-layer.md)

@@ -1,11 +1,13 @@
 ---
 title: Web Automation
-updated: 2026-09-23
+updated: 2026-09-27
 sources:
   - ../../Infrastructure/Automation/Web/BrowserHost.cs
   - ../../Infrastructure/Automation/Web/WebDriver.cs
   - ../../Infrastructure/Automation/Web/BrowserSession.cs
   - ../../Infrastructure/Automation/Web/WebPage.cs
+  - ../../Infrastructure/Automation/Web/WebResolvedElement.cs
+  - ../../Infrastructure/Automation/Web/WebLocatorResolver.cs
   - ../../Infrastructure/Extensions/DependencyInjection.cs
 ---
 
@@ -50,6 +52,30 @@ There is no `IBrowserHost` interface; DI registers the concrete `BrowserHost`.
 
 `WebPage` implements `IWebPage` by holding the wrapped Playwright `IPage`. It is a seam: application code depends on `IWebPage` and never sees Playwright.
 
+`ResolveAsync(Locator)` builds a Playwright locator from the platform-neutral strategy and returns a `WebResolvedElement` when it matches, or null when it does not:
+
+| Strategy | Playwright call |
+|---|---|
+| Role | `GetByRole(role, new PageGetByRoleOptions { Name = name })` |
+| Label | `GetByLabel(value)` |
+| Placeholder | `GetByPlaceholder(value)` |
+| Text | `GetByText(value)` |
+| TestId | `GetByTestId(value)` |
+| Id | `Locator("[id='value']")` |
+| Name | `Locator("[name='value']")` |
+| Css | `Locator(value)` |
+| XPath | `Locator("xpath=value")` |
+
+Presence is checked with `CountAsync`. `AccessibilityId` is not supported on web and returns null.
+
+## WebResolvedElement
+
+`WebResolvedElement` implements `IResolvedElement` with the matched `Locator` and the Playwright `ILocator` handle.
+
+## WebLocatorResolver
+
+`WebLocatorResolver` implements `ILocatorResolver`. It walks `Element.Locators` in order, calls `IWebDriver.Page.ResolveAsync` for each, and returns the first match. When nothing matches it throws `InvalidOperationException`. It is registered as `ILocatorResolver` for the web platform.
+
 ## Lifecycle summary
 
 | Action | Component | Behavior |
@@ -64,6 +90,7 @@ There is no `IBrowserHost` interface; DI registers the concrete `BrowserHost`.
 ## Related pages
 
 - [Automation Driver Contract](./automation-driver-contract.md)
+- [Elements and Locators](./elements-and-locators.md)
 - [Dependency Injection](./dependency-injection.md)
 - [Configuration](./configuration.md)
 - [Platform Notes](../wiki/platform-notes.md)

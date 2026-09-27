@@ -46,7 +46,7 @@ Nothing here is installed by build or test; the server and the device are only s
 dotnet build spicy-tofu.sln
 ```
 
-The solution contains five projects: `Domain`, `Application`, `Infrastructure`, `Web`, `Mobile`. All target `net9.0`.
+The solution contains six projects: `Domain`, `Application`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`. All target `net9.0`.
 
 ## Test
 

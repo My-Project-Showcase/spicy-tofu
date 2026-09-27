@@ -1,14 +1,14 @@
 ---
 title: Domain Layer
-updated: 2026-09-25
+updated: 2026-09-27
 sources:
   - ../../Domain/Domain.csproj
   - ../../Domain/Shared/AggregateRoot.cs
-  - ../../Domain/Entities/Enums/LocatorAttribute.cs
   - ../../Domain/Entities/TestCases/Test.cs
   - ../../Domain/Entities/TestCases/Workflow.cs
   - ../../Domain/Entities/TestCases/TestStep.cs
   - ../../Domain/Entities/Execution/TestExecutionStep.cs
+  - ../../Domain/Entities/Execution/TestExecutionResult.cs
   - ../../Domain/Runtime/Environment/TofuConfiguration.cs
   - ../../Domain/Runtime/Environment/Configuration/SpicyTofuConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
@@ -16,6 +16,9 @@ sources:
   - ../../Domain/Runtime/Environment/Configuration/PlaywrightConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/AppiumConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/LoggingConfig.cs
+  - ../../SharedKernel/Locators/LocatorStrategy.cs
+  - ../../SharedKernel/Locators/Locator.cs
+  - ../../SharedKernel/Elements/Element.cs
 ---
 
 # Domain Layer
@@ -26,9 +29,9 @@ The `Domain` project models the framework's own domain. It does not model the bu
 
 `Domain.Shared.AggregrateRoot`: note the typo in the type name. The file is `AggregateRoot.cs` but the class is spelled `AggregrateRoot`. It holds `Id`, `Name`, and `Description` string properties. Test case entity classes inherit from it.
 
-## Locator attributes
+## Locator and element models
 
-`Domain.Entities.Enums.LocatorAttribute`: an `Ardalis.SmartEnum` subclass. It defines seven static values (`Id`, `Name`, `Class`, `Css`, `XPath`, `Text`, `AccessibilityId`), each carrying a `MobileSupported` flag. The flag marks which locators are usable on mobile, but no logic consumes it yet. This is the only SmartEnum in the project and the reason `Ardalis.SmartEnum` is referenced.
+The locator and element models live in `SharedKernel`, not `Domain`: `SharedKernel.Locators.LocatorStrategy`, `SharedKernel.Locators.Locator`, and `SharedKernel.Elements.Element`. `Domain` no longer carries locator attributes and `Ardalis.SmartEnum` was removed from the project. See [Elements and Locators](./elements-and-locators.md).
 
 ## Test case models
 

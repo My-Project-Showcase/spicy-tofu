@@ -1,20 +1,25 @@
 ---
 title: Platform Notes
-updated: 2026-09-23
+updated: 2026-09-27
 sources:
   - ../../Web/appsettings.json
   - ../../Mobile/appsettings.json
   - ../../Web/Extension/WebExtensions.cs
   - ../../Mobile/Extensions/MobileExtensions.cs
   - ../../Infrastructure/Automation/Web/BrowserHost.cs
+  - ../../Infrastructure/Automation/Web/WebPage.cs
+  - ../../Infrastructure/Automation/Web/WebLocatorResolver.cs
   - ../../Infrastructure/Automation/Mobile/MobileHost.cs
   - ../../Infrastructure/Automation/Mobile/MobileDriver.cs
+  - ../../Infrastructure/Automation/Mobile/MobileSession.cs
+  - ../../Infrastructure/Automation/Mobile/MobileLocatorResolver.cs
   - ../../Infrastructure/Automation/Mobile/AppiumServerLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/AndroidEmulatorLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/IosSimulatorLauncher.cs
   - ../technical/setup-and-commands.md
   - ../technical/web-automation.md
   - ../technical/mobile-automation.md
+  - ../technical/elements-and-locators.md
   - ../technical/configuration.md
 ---
 
@@ -42,7 +47,7 @@ This page collects per-platform knowledge. It covers both platforms because both
 - iOS simulator support is macOS-only (`xcrun simctl`); on Windows the launcher throws `PlatformNotSupportedException`. The simulator is chosen by `Appium:IosSimulatorUdid`.
 - Launchers reuse an already-running server or device and only shut down what they started themselves. The user can pre-boot an emulator or start Appium manually; the framework leaves those alone.
 - `MobileDriver` creates one Appium driver per named session, choosing `AndroidDriver` or `IOSDriver` from `PlatformName`. `TestExecution.DefaultTimeoutMs` feeds the command timeout.
-- `LocatorAttribute.MobileSupported` flags which locators work on mobile (`Id`, `Class`, `XPath`, `AccessibilityId` marked supported; `Name`, `Css`, `Text` not), but nothing consumes the flag yet. Unverified: whether a mobile driver will gate locators on this flag.
+- Mobile locator resolution supports `Id`, `Name`, `AccessibilityId`, and `XPath`. Web-only strategies (Role, Label, Placeholder, Text, TestId, Css) are skipped by `MobileLocatorResolver`, so a mobile element definition should include at least one of the supported strategies. See [Elements and Locators](../technical/elements-and-locators.md).
 
 ## Shared platform notes
 

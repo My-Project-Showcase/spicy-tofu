@@ -9,7 +9,8 @@ sources:
   - ../../Application/Automation/IAutomationDriver.cs
   - ../../Domain/Runtime/Environment/TofuConfiguration.cs
   - ../../Domain/Runtime/Environment/Configuration/Projects.cs
-  - ../../Application/Locators/LocatorCandidate.cs
+  - ../../Application/Locators/ILocatorResolver.cs
+  - ../../SharedKernel/Locators/Locator.cs
   - ../../Application/Logging/ILogger.cs
   - ../../Infrastructure/Logging/OutputModeDetector.cs
   - ../../Infrastructure/Logging/ConsolePrintStrategy.cs
@@ -36,6 +37,12 @@ This page records observable gaps between the documented intent (AGENTS.md, olde
 - `PlaywrightConfig.TimeOut` is unused; the framework reads `NavigationTimeoutMs`.
 - `docs/README.md` was an empty placeholder; this task filled it.
 - `CHANGELOG.md` was an empty placeholder; this task filled it.
+
+## Element and locator layer
+
+- The click operation is not implemented: `ClickEvent` resolves the element and reports success but does not interact with the driver. `FillEvent`, `PressEvent`, and the other action events do not exist yet, so a test containing a non-click step fails at the event registry (`InvalidOperationException: No event registered for action '...'`).
+- `SampleElementRepository` is illustrative. The repository has no application-under-test project, so the sample stands in for a real application element repository.
+- Locator resolution on a real page is unverified end to end: the framework has no navigation step yet, so the web `default` page is blank during a run and only locators that match a blank page resolve. The success path is exercised only by a matching locator.
 
 ## Driver startup on both platforms
 
