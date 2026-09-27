@@ -5,18 +5,18 @@ using Application.Logging;
 using Application.Runtime.JsonService;
 using Application.Runtime.RunService;
 
-using Domain.Runtime.Environment.Configuration;
 using Domain.Events;
 using Domain.Events.EventsRegistry;
+using Domain.Runtime.Environment.Configuration;
 
 using Infrastructure.Automation.Mobile;
 using Infrastructure.Automation.Web;
+using Infrastructure.Events;
 using Infrastructure.Logging;
+using Infrastructure.Runtime.EventsService;
 using Infrastructure.Runtime.JsonService;
 using Infrastructure.Runtime.RunServices;
 using Infrastructure.Runtime.TestExecution;
-using Infrastructure.Events;
-using Infrastructure.Runtime.EventsService;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -75,6 +75,7 @@ public static class DependencyInjection
         service.AddSingleton<TestsLoadedHandler>();
         service.AddSingleton<IRunService, RunService>();
         service.AddSingleton<IEventRegistry, EventService>();
+        service.AddEvents();
         return service;
     }
 

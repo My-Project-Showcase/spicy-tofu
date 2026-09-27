@@ -1,10 +1,11 @@
 ---
 title: Design Decisions
-updated: 2026-09-23
+updated: 2026-09-27
 sources:
   - ../technical/architecture-overview.md
   - ../technical/automation-driver-contract.md
   - ../technical/dependency-injection.md
+  - ../technical/runtime-pipeline.md
   - ../technical/web-automation.md
   - ../technical/mobile-automation.md
   - ../../Application/Automation/Web/IWebPage.cs
@@ -15,6 +16,11 @@ sources:
   - ../../Infrastructure/Automation/Mobile/Devices/AndroidEmulatorLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/IosSimulatorLauncher.cs
   - ../../Infrastructure/Extensions/DependencyInjection.cs
+  - ../../Infrastructure/Runtime/RunService/RunService.cs
+  - ../../Infrastructure/Runtime/JsonService/JsonService.cs
+  - ../../Infrastructure/Runtime/EventService/EventService.cs
+  - ../../Domain/Events/ITestEvent.cs
+  - ../../Domain/Events/EventsRegistry/IEventRegistry.cs
 ---
 
 # Design Decisions
@@ -42,6 +48,12 @@ The reasoning: platform selection is a wiring concern, not a runtime concern. Re
 ## Driver lifecycle owned by the run service
 
 `RunService` receives the selected driver as `IAutomationDriver` and calls `StartAsync` before loading tests and `StopAsync` in a `finally`, so the driver is always stopped whether the run succeeds or throws. The entry points never touch the driver and never construct one. This centralizes lifecycle in one place: the web and mobile executables are identical apart from their `SpicyTofu:Platform` value.
+
+## Loading and executing are separate, with no event handoff
+
+`JsonService` only loads and deserializes tests and returns them; it does not raise an event and does not know about execution results. `RunService` owns orchestration: it loads, flattens through `TestsLoadedHandler`, resolves each step's action to an `ITestEvent` through `IEventRegistry`, and reports the returned `TestExecutionResult` through `ILogger`.
+
+An earlier design had `JsonService` raise a `TestsLoaded` event that `RunService` subscribed to. That indirection added nothing: `LoadJson` already returns the loaded tests, so a subscriber and a matching unsubscribe were pure ceremony, and the event also allowed loading to trigger execution outside the run service. Removing it keeps a single orchestrator and keeps the loader a pure data-loading concern.
 
 ## Timeout injection through options
 

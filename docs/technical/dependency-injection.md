@@ -8,6 +8,10 @@ sources:
   - ../../Mobile/Extensions/MobileExtensions.cs
   - ../../Web/Program.cs
   - ../../Mobile/Program.cs
+  - ../../Infrastructure/Runtime/EventService/EventService.cs
+  - ../../Infrastructure/Events/ClickEvent.cs
+  - ../../Domain/Events/ITestEvent.cs
+  - ../../Domain/Events/EventsRegistry/IEventRegistry.cs
 ---
 
 # Dependency Injection
@@ -19,7 +23,7 @@ The web and mobile executables are the composition roots. Both read configuratio
 `Web/Program.cs` builds the generic host with `Host.CreateDefaultBuilder(args)`, sets the content root to `AppContext.BaseDirectory` so `appsettings.json` is read from the build output folder regardless of the working directory, and calls, in order:
 
 1. `AddWebExtensions` (from `WebExtensions`): loads `appsettings.json`, overlays `TOFU_`-prefixed environment variables, binds `SpicyTofuConfig`, `Projects`, `PlaywrightConfig`, and `TestExecution`.
-2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which binds the `Logging` section and registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), and `TestsLoadedHandler`.
+2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which binds the `Logging` section and registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), `TestsLoadedHandler`, and `IEventRegistry` (`EventService`). `AddServices` then calls `AddEvents`, which registers the `ITestEvent` implementations (`ClickEvent` today).
 3. `AddAutomation` (from `Infrastructure.Extensions`): the single platform-selection point.
 
 `Program.cs` owns the host with `using IHost host = ...` so the host and its singleton services are disposed when the run ends (see [Driver Lifecycle and Host Disposal](#driver-lifecycle-and-host-disposal)). After the host is built it resolves `IRunService` from the container and calls `RunAsync()`, which drives the runtime pipeline. See [Runtime Pipeline](./runtime-pipeline.md).
@@ -43,10 +47,14 @@ See [Automation Driver Contract](./automation-driver-contract.md) for the interf
 `Mobile/Program.cs` builds the generic host with `Host.CreateDefaultBuilder(args)`, sets the content root to `AppContext.BaseDirectory` (same reason as the web entry point), and calls, in order:
 
 1. `AddMobileDependencies` (from `MobileExtensions`): loads configuration, overlays `TOFU_` variables, and binds `SpicyTofuConfig`, `Projects`, `TestExecution`, and `AppiumConfig`. Note it binds the options twice (once in `AddConfigProperties` called directly, once through `AddEnvCompatibility`, which builds a merged configuration and re-binds), which is redundant but harmless.
-2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): the same passthrough as the web entry point.
+2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): the same passthrough as the web entry point, including the `IEventRegistry` and `AddEvents` registrations.
 3. `AddAutomation` (from `Infrastructure.Extensions`): the same single platform-selection point as web.
 
 Like the web entry point, the mobile program owns the host with `using IHost host = ...`, then resolves `IRunService` and calls `RunAsync()`. The only difference between the two executables is which `IAutomationDriver` `AddAutomation` registers, which is driven by their `SpicyTofu:Platform` values. Selection and execution flow are shared.
+
+## Events registry
+
+`IEventRegistry` is implemented by `EventService`, which is constructed from every registered `ITestEvent` and indexes them by their `[Action(...)]` attribute name (case-insensitive). `AddServices` registers `IEventRegistry` and then calls `AddEvents`, which registers each `ITestEvent` implementation; `ClickEvent` is the only one today. `RunService` depends on `IEventRegistry` and never on a concrete event. See [Runtime Pipeline](./runtime-pipeline.md).
 
 ## Driver lifecycle and host disposal
 
@@ -66,6 +74,8 @@ Driver start/stop and host disposal are separate responsibilities.
 | `IJsonService` / `JsonService` | `AddServices` | singleton | always |
 | `IRunService` / `RunService` | `AddServices` | singleton | always |
 | `TestsLoadedHandler` | `AddServices` | singleton | always |
+| `IEventRegistry` / `EventService` | `AddServices` | singleton | always |
+| `ITestEvent` / `ClickEvent` | `AddEvents` (called by `AddServices`) | singleton | always |
 | `BrowserHost` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `WebDriver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `IWebDriver` (forward to `WebDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |

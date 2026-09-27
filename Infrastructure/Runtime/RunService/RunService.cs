@@ -3,7 +3,7 @@ using Application.Logging;
 using Application.Runtime.JsonService;
 using Application.Runtime.RunService;
 
-using Domain.Entities.TestCases;
+using Domain.Events.EventsRegistry;
 
 using Infrastructure.Runtime.TestExecution;
 
@@ -14,17 +14,20 @@ public sealed class RunService : IRunService
     private readonly IAutomationDriver _driver;
     private readonly IJsonService _jsonService;
     private readonly ILogger _logger;
+    private readonly IEventRegistry _eventRegistry;
     private readonly TestsLoadedHandler _testsLoadedHandler;
 
     public RunService(
         IAutomationDriver driver,
         IJsonService jsonService,
         ILogger logger,
+        IEventRegistry eventRegistry,
         TestsLoadedHandler testsLoadedHandler)
     {
         _driver = driver;
         _jsonService = jsonService;
         _logger = logger;
+        _eventRegistry = eventRegistry;
         _testsLoadedHandler = testsLoadedHandler;
     }
 
@@ -38,35 +41,37 @@ public sealed class RunService : IRunService
 
             _logger.Info("Loading tests.");
 
-            _jsonService.TestsLoaded += OnTestsLoaded;
+            var testResult = await _jsonService.LoadJson();
 
-            try
+            if (!testResult.Item1)
             {
-                var testResult = await _jsonService.LoadJson();
-
-                if (!testResult.Item1)
-                {
-                    _logger.Warning("The test directory could not be loaded.");
-                }
+                _logger.Warning("The test directory could not be loaded.");
+                return;
             }
-            finally
+
+            var steps = _testsLoadedHandler.Flatten(testResult.Item2);
+
+            foreach (var step in steps)
             {
-                _jsonService.TestsLoaded -= OnTestsLoaded;
+                _logger.ActionStarted(step);
+
+                var testEvent = _eventRegistry.Get(step.Step.Type);
+
+                var result = await testEvent.ExecuteAsync(step);
+
+                if (result.IsSuccess)
+                {
+                    _logger.ActionCompleted(step);
+                }
+                else
+                {
+                    _logger.ActionFailed(step, result.Error);
+                }
             }
         }
         finally
         {
             await _driver.StopAsync();
-        }
-    }
-
-    private void OnTestsLoaded(List<Test> tests)
-    {
-        var steps = _testsLoadedHandler.Flatten(tests);
-
-        foreach (var step in steps)
-        {
-            _logger.ActionStarted(step);
         }
     }
 }

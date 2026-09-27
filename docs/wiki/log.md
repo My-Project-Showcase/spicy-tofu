@@ -1,3 +1,11 @@
+## [2026-09-27] update | Test execution flow
+
+- `JsonService` no longer raises a `TestsLoaded` event and returns only the loaded `List<Test>`; the event was removed from `IJsonService` and `JsonService`.
+- `RunService` now orchestrates execution directly: it loads, flattens through `TestsLoadedHandler`, resolves each step's action through `IEventRegistry` to an `ITestEvent`, executes it, and reports the returned `TestExecutionResult` through `ILogger` (`ActionCompleted`/`ActionFailed`). Steps run sequentially and execution no longer stops after the first step.
+- `AddServices` now calls `AddEvents`, registering the `ITestEvent` implementations that `EventService` indexes.
+- Added a `design-decisions.md` note explaining why loading and execution are separate with no event handoff.
+- Rewrote `docs/technical/runtime-pipeline.md`; updated `dependency-injection.md`, the root `README.md`, `AGENTS.md`, and `CHANGELOG.md`.
+
 ## [2026-09-23] update | Driver lifecycle wiring
 
 - Added the single `AddAutomation` composition point in `Infrastructure.Extensions`: reads `SpicyTofu:Platform` once, registers exactly one platform, throws on a missing or unknown value.

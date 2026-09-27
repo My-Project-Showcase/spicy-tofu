@@ -24,6 +24,7 @@ The project is pre-alpha, so treat the model and the interfaces as the design su
 - A five-project .NET 9 solution with dependencies pointing inward and `Domain` depending on nothing.
 - JSON test definitions loaded from `Projects:RootDirectory` and deserialized into the `Test` model with case-insensitive property matching.
 - Flattening of the `Test` / `Workflow` / `TestSteps` hierarchy into `TestExecutionStep` records.
+- Event dispatch: `RunService` resolves each step's action to an `ITestEvent` through `IEventRegistry` and reports the returned `TestExecutionResult` through `ILogger`.
 - An execution-oriented logging pipeline: an `ILogger` facade, a `LogEntry` handoff, and an `IPrintStrategy` rendering seam with separate Interactive and CI layouts.
 - An `IAutomationDriver` lifecycle owned by `RunService`, with start before the load and stop in a `finally` block.
 - Composition-time platform selection in `AddAutomation`, which fails fast on a missing or unknown `SpicyTofu:Platform`.
@@ -33,18 +34,18 @@ The project is pre-alpha, so treat the model and the interfaces as the design su
 
 ### Not yet implemented
 
-- **Executing steps.** `RunService` reports each loaded step through `ILogger.ActionStarted`. Nothing dispatches that step to a page or a screen.
+- **Executing steps against a platform.** `RunService` dispatches each step to its `ITestEvent` through `IEventRegistry`, but the only handler today (`ClickEvent`) is a stub that returns success without touching the driver. Nothing interacts with a page or a screen.
 - **Interaction surface.** `IWebPage` is an empty marker interface, `IMobileSession` exposes only `Name`, and there are no click, fill, navigate, or read operations anywhere in the contracts.
 - **Locator resolution.** The `LocatorAttribute` SmartEnum and the `ILogger.LocatorResolution` rendering path exist, but no code turns a step's `Attribute` and `Target` into a platform locator.
 - **Assertions.** There is no assertion model, and nothing evaluates an expected result.
-- **Result reporting.** Runs produce console text only. There are no result records, no pass or fail state, and no report output.
+- **Result reporting.** Each executed step produces a `TestExecutionResult`, which `RunService` reports through `ILogger` (`ActionCompleted` on success, `ActionFailed` on failure). There is no aggregate result, no pass or fail state, and no report output.
 - **Parallelism and retries.** `TestExecution:Parallel`, `Workers`, and `Retries` are bound to options but never read by the framework.
 - **Automated tests.** No test projects exist, so `dotnet test` is a no-op.
 - **Mobile interaction.** Appium sessions are created and torn down correctly, but nothing drives the application under test.
 
 ## How Spicy-Tofu Works
 
-A run is a single linear flow. The diagram below is the actual current behaviour, including where it stops.
+A run is a single linear flow. The diagram below is the actual current behaviour.
 
 ```text
 appsettings.json + TOFU_ environment variables
@@ -78,8 +79,7 @@ appsettings.json + TOFU_ environment variables
               reads every *.json under Projects:RootDirectory
                          │
                          ▼
-                  TestsLoaded event
-                  carries List<Test>
+                    List<Test>
                          │
                          ▼
              TestsLoadedHandler.Flatten()
@@ -87,11 +87,18 @@ appsettings.json + TOFU_ environment variables
                          │
                          ▼
              ILogger.ActionStarted(step)
-             reports the step
                          │
                          ▼
-        [ not yet implemented ]
-        dispatch the step to the driver
+             IEventRegistry.Get(step.Step.Type)
+             resolves the action to an ITestEvent
+                         │
+                         ▼
+             ITestEvent.ExecuteAsync(step)
+             returns a TestExecutionResult
+                         │
+                         ▼
+             ILogger.ActionCompleted / ActionFailed
+             reports the result
                          │
                          ▼
                driver.StopAsync()
@@ -104,8 +111,9 @@ What each stage is for:
 - **Host composition** builds the dependency injection container. The two entry points, `Web/Program.cs` and `Mobile/Program.cs`, are nearly identical; they differ only in which configuration sections they bind and what value `SpicyTofu:Platform` holds.
 - **`AddAutomation`** reads the platform once and registers exactly one implementation of `IAutomationDriver`.
 - **`RunService`** drives the run and owns the driver lifecycle. It depends on `IAutomationDriver` and never learns which platform it got.
-- **`IJsonService`** reads and deserializes the JSON files, then raises `TestsLoaded` with the loaded tests. It does not flatten or execute.
+- **`IJsonService`** reads and deserializes the JSON files and returns the loaded tests. It does not flatten or execute.
 - **`TestsLoadedHandler`** flattens the nested test hierarchy into a flat sequence of `TestExecutionStep` records.
+- **`IEventRegistry`** resolves each step's action name to the `ITestEvent` that executes it, and `RunService` reports the returned `TestExecutionResult` through the logger.
 - **Logging** reports progress as plain text through the `ILogger` and `IPrintStrategy` pair.
 
 The load and the driver lifecycle are coupled deliberately: the driver starts first, and the stop call sits in a `finally` block so it runs on every path, including failures and cancellation.
@@ -316,7 +324,7 @@ The mobile file has the same core sections with `Platform` set to `Mobile`, and 
 }
 ```
 
-`Projects:RootDirectory` is the path the loader reads, so it must be set for a run to find anything. If the directory does not exist, the load reports a warning and no event fires.
+`Projects:RootDirectory` is the path the loader reads, so it must be set for a run to find anything. If the directory does not exist, the load reports a warning and the run ends without executing any steps.
 
 ### Environment variable overlay
 
@@ -388,7 +396,7 @@ dotnet run --project Web
 dotnet run --project Mobile
 ```
 
-Before either command is useful, set `Projects:RootDirectory` to a folder containing test definition JSON, and make sure the relevant platform section is configured. Note that a run currently loads and reports steps without acting on them, so a successful exit does not mean any test passed.
+Before either command is useful, set `Projects:RootDirectory` to a folder containing test definition JSON, and make sure the relevant platform section is configured. Note that the only step handler today (`ClickEvent`) is a stub that returns success without acting on the driver, so a successful exit does not mean any test passed.
 
 ### Test
 
@@ -440,7 +448,7 @@ Start with the [documentation index](docs/README.md) for the full table of conte
 
 ### Runtime
 
-- [Runtime Pipeline](docs/technical/runtime-pipeline.md) - from JSON files to `TestExecutionStep` records, and the driver lifecycle around the load.
+- [Runtime Pipeline](docs/technical/runtime-pipeline.md) - from JSON files to executed steps: `JsonService`, `TestsLoadedHandler`, `IEventRegistry`, `ITestEvent`, `TestExecutionResult`, and the driver lifecycle around the run.
 - [Logging](docs/technical/logging.md) - the `ILogger` API, `LogEntry`, the `IPrintStrategy` seam, and the Interactive and CI layouts.
 
 ### Automation
@@ -470,7 +478,7 @@ The reasoning behind each of these is recorded in [Design Decisions](docs/wiki/d
 
 ## Known Limitations
 
-- **Steps are not executed.** A run loads and reports steps, then exits. Nothing interacts with a browser or a device.
+- **Steps are not really executed.** A run loads, flattens, and dispatches steps to their `ITestEvent`, but the only handler (`ClickEvent`) is a stub that returns success. Nothing interacts with a browser or a device.
 - **No assertions or result reporting.** There is no pass or fail state, and no report output beyond console text.
 - **No test projects.** `dotnet test` is a no-op, and the framework itself is untested.
 - **The format check is not green.** `dotnet format spicy-tofu.sln --verify-no-changes` reports violations in older files.

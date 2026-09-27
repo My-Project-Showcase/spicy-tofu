@@ -13,8 +13,6 @@ public class JsonService : IJsonService
 {
     private readonly IOptions<Projects> _projectsConfig;
 
-    public event Action<List<Test>>? TestsLoaded;
-
     public JsonService(IOptions<Projects> projectsConfig)
     {
         _projectsConfig = projectsConfig;
@@ -53,8 +51,6 @@ public class JsonService : IJsonService
                 Console.WriteLine($"{testFile} was unable to load.");
             }
         }
-
-        TestsLoaded?.Invoke(tests);
 
         return Tuple.Create(true, tests);
     }
