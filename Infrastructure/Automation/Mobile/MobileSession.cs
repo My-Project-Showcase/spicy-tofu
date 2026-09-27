@@ -1,6 +1,6 @@
-using Application.Automation.Mobile;
-
 using OpenQA.Selenium.Appium;
+
+using Application.Automation.Mobile;
 
 namespace Infrastructure.Automation.Mobile;
 

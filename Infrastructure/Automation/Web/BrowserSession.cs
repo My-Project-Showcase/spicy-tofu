@@ -1,6 +1,6 @@
-using Application.Automation.Web;
-
 using Microsoft.Playwright;
+
+using Application.Automation.Web;
 
 namespace Infrastructure.Automation.Web;
 

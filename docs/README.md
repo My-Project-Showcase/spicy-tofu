@@ -34,7 +34,7 @@ These pages are maintained by the agent and steered by humans. If a page and the
 | [log.md](./wiki/log.md) | Append-only history of wiki changes. | 2026-09-27 |
 | [design-decisions.md](./wiki/design-decisions.md) | Why the framework is shaped the way it is: the `IWebPage` seam, named sessions, the browser singleton, the single `AddAutomation` composition point, driver lifecycle ownership, the separation of loading from execution, implicit mobile environment startup with reuse semantics, and the `AppiumConfig` naming. | 2026-09-27 |
 | [platform-notes.md](./wiki/platform-notes.md) | Per-platform knowledge for Playwright (web) and Appium (mobile). | 2026-09-23 |
-| [known-issues-and-discrepancies.md](./wiki/known-issues-and-discrepancies.md) | Stale AGENTS.md claims, empty or unused code, driver startup notes, config binding gaps, and naming oddities. | 2026-09-23 |
+| [known-issues-and-discrepancies.md](./wiki/known-issues-and-discrepancies.md) | Stale AGENTS.md claims, empty or unused code, driver startup notes, config binding gaps, and naming oddities. | 2026-09-27 |
 
 ## Conventions
 

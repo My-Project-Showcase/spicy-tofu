@@ -1,7 +1,7 @@
-using Domain.Runtime.Environment.Configuration;
-
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
+
+using Domain.Runtime.Environment.Configuration;
 
 namespace Infrastructure.Automation.Web;
 

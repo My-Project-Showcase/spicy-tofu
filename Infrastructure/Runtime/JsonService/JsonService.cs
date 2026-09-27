@@ -1,11 +1,10 @@
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 
 using Application.Runtime.JsonService;
 
 using Domain.Entities.TestCases;
 using Domain.Runtime.Environment.Configuration;
-
-using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Runtime.JsonService;
 

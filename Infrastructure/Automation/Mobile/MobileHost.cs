@@ -1,8 +1,8 @@
+using Microsoft.Extensions.Options;
+
 using Domain.Runtime.Environment.Configuration;
 
 using Infrastructure.Automation.Mobile.Devices;
-
-using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Automation.Mobile;
 

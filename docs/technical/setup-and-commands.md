@@ -62,7 +62,7 @@ No test projects exist yet, so this runs as a no-op.
 dotnet format spicy-tofu.sln --verify-no-changes
 ```
 
-Style is defined by `.editorconfig` and `Directory.Build.props` and enforced in build (`EnforceCodeStyleInBuild`), with analyzers at `latest-recommended`. `TreatWarningsAsErrors` applies to Release builds only. The format check currently reports violations; see [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
+Style is defined by `.editorconfig` and `Directory.Build.props` and enforced in build (`EnforceCodeStyleInBuild`), with analyzers at `latest-recommended`. `TreatWarningsAsErrors` applies to Release builds only. Using-directive order is a documented convention, not enforced by `dotnet format`: external (`System.*` first, then Microsoft and third-party), then `Application`, `Domain`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`. See AGENTS.md. The format check currently reports violations; see [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
 
 ## Configuration sources
 

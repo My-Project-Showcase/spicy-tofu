@@ -1,6 +1,6 @@
 ---
 title: Known Issues and Discrepancies
-updated: 2026-09-23
+updated: 2026-09-27
 sources:
   - ../../AGENTS.md
   - ../../docs/README.md
@@ -55,7 +55,7 @@ Both entry points now resolve `IRunService` and call `RunAsync()`, which starts 
 
 ## Format check
 
-`dotnet format spicy-tofu.sln --verify-no-changes` still reports violations in source files (whitespace, final-newline, and using-ordering diagnostics across Application, Domain, Infrastructure, Mobile, and Web). The runtime-pipeline, logging, and automation-wiring files (`JsonService`, `RunService`, `TestsLoadedHandler`, `TestExecutionStep`, `IJsonService`, the `Application/Logging` contracts, the `Application/Locators` locator code, the `Infrastructure/Logging` implementation, `DependencyInjection`, the `IWebDriver` and `IMobileDriver` automation interfaces, and both `Program.cs` entry points) are clean; the remaining failures are all in files written before the web runner and runtime-pipeline work.
+`dotnet format spicy-tofu.sln --verify-no-changes` still reports whitespace and final-newline violations in files written before the web runner and runtime-pipeline work. Import ordering is no longer checked: the import sorter is disabled in `.editorconfig`, so using-directive order is a documented convention applied by hand (external first, then `Application`, `Domain`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`). See AGENTS.md and the csharp-developer skill (`references/using-directives.md`).
 
 ## What is deliberately not recorded
 

@@ -1,9 +1,9 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
 using Application.Runtime.RunService;
 
 using Infrastructure.Extensions;
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 using Mobile.Extensions;
 

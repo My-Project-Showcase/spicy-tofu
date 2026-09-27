@@ -1,10 +1,10 @@
+using Microsoft.Extensions.Options;
+
 using Application.Locators;
 using Application.Logging;
 
 using Domain.Entities.Execution;
 using Domain.Runtime.Environment.Configuration;
-
-using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Logging;
 

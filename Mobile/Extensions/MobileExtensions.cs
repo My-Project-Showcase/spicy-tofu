@@ -1,6 +1,7 @@
-using Domain.Runtime.Environment.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
+using Domain.Runtime.Environment.Configuration;
 
 namespace Mobile.Extensions;
 

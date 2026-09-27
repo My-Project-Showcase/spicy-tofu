@@ -1,9 +1,10 @@
-using Application.Automation.Web;
-using Domain.Runtime.Environment.Configuration;
-
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
+
+using Application.Automation.Web;
+
+using Domain.Runtime.Environment.Configuration;
 
 namespace Infrastructure.Automation.Web;
 

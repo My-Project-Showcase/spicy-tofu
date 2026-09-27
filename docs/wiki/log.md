@@ -1,3 +1,11 @@
+## [2026-09-27] update | Using directive order
+
+- Defined a fixed using-directive order: external (`System.*` first, then Microsoft and third-party), then `Application`, `Domain`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`, with one blank line between groups.
+- Disabled the `dotnet format` import sorter in `.editorconfig` (removed `dotnet_sort_system_directives_first`), because it forces strict alphabetical order and cannot express the group order. Using order is now a documented convention applied by hand.
+- Added `.opencode/skills/csharp-developer/references/using-directives.md`, linked from the skill, and recorded the convention in AGENTS.md.
+- Reordered using directives across the solution to match.
+- Updated `known-issues-and-discrepancies.md` (the format-check paragraph no longer lists using-ordering diagnostics) and `setup-and-commands.md`.
+
 ## [2026-09-27] update | Test execution flow
 
 - `JsonService` no longer raises a `TestsLoaded` event and returns only the loaded `List<Test>`; the event was removed from `IJsonService` and `JsonService`.

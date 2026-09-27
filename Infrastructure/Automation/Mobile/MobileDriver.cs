@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
-
-using Application.Automation.Mobile;
-using Domain.Runtime.Environment.Configuration;
-
 using Microsoft.Extensions.Options;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Android;
 using OpenQA.Selenium.Appium.iOS;
+
+using Application.Automation.Mobile;
+
+using Domain.Runtime.Environment.Configuration;
 
 namespace Infrastructure.Automation.Mobile;
 

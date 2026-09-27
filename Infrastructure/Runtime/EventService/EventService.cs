@@ -1,5 +1,5 @@
-using Domain.Events.EventsRegistry;
 using Domain.Events;
+using Domain.Events.EventsRegistry;
 
 using SharedKernel.Attributes;
 

@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
 using Application.Automation;
 using Application.Automation.Mobile;
 using Application.Automation.Web;
@@ -17,9 +20,6 @@ using Infrastructure.Runtime.EventsService;
 using Infrastructure.Runtime.JsonService;
 using Infrastructure.Runtime.RunServices;
 using Infrastructure.Runtime.TestExecution;
-
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Extensions;
 

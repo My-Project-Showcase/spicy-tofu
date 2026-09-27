@@ -82,8 +82,14 @@ dotnet_naming_style.camel_case_underscore_style.required_prefix = _
 dotnet_naming_style.camel_case_underscore_style.capitalization = camel_case
 
 # Code style defaults
+# Using directive order is a documented convention, not enforced by dotnet format:
+# external (System.* first, then Microsoft and third-party, alphabetical), then
+# Application, Domain, Infrastructure, SharedKernel, Web, Mobile, with a blank line
+# between groups. The import sorter is intentionally left off (no
+# dotnet_sort_system_directives_first and no dotnet_separate_import_directive_groups)
+# so it does not force strict alphabetical order. See AGENTS.md and the
+# csharp-developer skill (references/using-directives.md).
 csharp_using_directive_placement = outside_namespace:suggestion
-dotnet_sort_system_directives_first = true
 csharp_prefer_braces = true:silent
 csharp_preserve_single_line_blocks = true:none
 csharp_preserve_single_line_statements = false:none

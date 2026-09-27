@@ -45,12 +45,14 @@ Load detailed guidance based on context:
 |-------|-----------|-----------|
 | Modern C# | `references/modern-csharp.md` | Records, pattern matching, nullable types |
 | Performance | `references/performance.md` | Span<T>, async, memory optimization, AOT |
+| Using directives | `references/using-directives.md` | Ordering and grouping using directives |
 
 ## Constraints
 
 ### MUST DO
 - Enable nullable reference types in all projects
 - Use file-scoped namespaces and primary constructors (C# 12)
+- Order `using` directives by group: external (`System.*` first, then Microsoft and third-party), `Application`, `Domain`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`, with a blank line between groups. See `references/using-directives.md`
 - Apply async/await for all I/O operations — always accept and forward `CancellationToken`:
   ```csharp
   // Correct
