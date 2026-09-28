@@ -11,6 +11,7 @@ Order `using` directives into fixed groups, separated by exactly one blank line:
 5. `SharedKernel.*`
 6. `Web.*`
 7. `Mobile.*`
+8. `Tests.*`
 
 Within a group, sort alphabetically by namespace. A `using Alias = Namespace.Type;` alias belongs to the group of its target `Namespace` and sorts by that target namespace. Omit empty groups. Keep `using` directives outside the namespace, so the file-scoped namespace follows the last group.
 
@@ -62,3 +63,4 @@ using Domain.Runtime.Environment.Configuration;
 - `System.*` stays inside the external group, ahead of `Microsoft.*` and third-party namespaces; there is no blank line between them.
 - `SharedKernel.*` is its own group, after `Infrastructure.*`.
 - The executable entry points place `Web.*` and `Mobile.*` last, after `SharedKernel.*`.
+- The `Tests` project places `Tests.*` last, after `SharedKernel.*`.

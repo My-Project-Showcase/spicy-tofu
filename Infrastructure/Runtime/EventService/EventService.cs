@@ -5,7 +5,7 @@ using SharedKernel.Attributes;
 
 namespace Infrastructure.Runtime.EventsService;
 
-public class EventService: IEventRegistry
+public class EventService : IEventRegistry
 {
 
     private readonly Dictionary<string, ITestEvent> _events;
@@ -23,13 +23,16 @@ public class EventService: IEventRegistry
 
     public ITestEvent Get(string action)
     {
-        if (!_events.TryGetValue(action, out var testEvent))
+        if (_events.TryGetValue(action, out var testEvent))
         {
-            throw new InvalidOperationException(
-                $"No event registered for action '{action}'"
-            );
+            return testEvent;
         }
 
-        return testEvent;
+        throw new InvalidOperationException(
+            $"No event registered for action '{action}'"
+        );
     }
+
+    public bool TryGet(string action, out ITestEvent? testEvent)
+        => _events.TryGetValue(action, out testEvent);
 }

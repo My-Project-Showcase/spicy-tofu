@@ -2,7 +2,7 @@
 
 Spicy-Tofu is a cross-platform test automation framework for web and mobile, written in C# on .NET 9. Test cases are defined in JSON, run through a single shared core, and driven by [Playwright](https://playwright.dev/) on web or [Appium](https://appium.io/) on mobile.
 
-**Status:** pre-alpha. The project is at version 0.1.0 and has not been released. Configuration, composition, test loading, logging, element and locator resolution, and the automation driver lifecycle work end to end. The click or fill interaction against a live page or device does not exist yet. See [Current Status](#current-status).
+**Status:** pre-alpha. The project is at version 0.1.0 and has not been released. Configuration, composition, test loading, logging, element and locator resolution, the automation driver lifecycle, and the `navigate`, `click`, and `fill` actions work end to end. Assertions and result reporting are not implemented yet. See [Current Status](#current-status).
 
 ## Overview
 
@@ -21,28 +21,29 @@ The project is pre-alpha, so treat the model and the interfaces as the design su
 
 ### Implemented
 
-- A six-project .NET 9 solution with dependencies pointing inward and `Domain` depending on nothing.
+- A seven-project .NET 9 solution with dependencies pointing inward and `Domain` depending on nothing.
 - JSON test definitions loaded from `Projects:RootDirectory` and deserialized into the `Test` model with case-insensitive property matching.
-- Flattening of the `Test` / `Workflow` / `TestSteps` hierarchy into `TestExecutionStep` records.
-- Event dispatch: `RunService` resolves each step's action to an `ITestEvent` through `IEventRegistry` and reports the returned `TestExecutionResult` through `ILogger`.
-- An element and locator layer: application element definitions behind `IElementRepository`, platform-neutral `Element` and `Locator` models plus reusable MUI, Shadcn, and Syncfusion component locators in `SharedKernel`, and ordered locator resolution with fallback behind `ILocatorResolver`.
+- Flattening of the `Test` / `Workflow` / `TestSteps` hierarchy into `TestExecutionStep` records, tolerating null `Workflows` and `Steps`.
+- Event dispatch: `RunService` resolves each step's action to an `ITestEvent` through `IEventRegistry.TryGet` and reports the returned `TestExecutionResult` through `ILogger`.
+- The `navigate`, `click`, and `fill` actions: `NavigateEvent` drives the platform-neutral `INavigator`, and `ClickEvent` and `FillEvent` resolve their element and call `ClickAsync`/`FillAsync` on the resolved element.
+- Per-step failure isolation and a `RunResult`: an unknown action or a thrown exception fails only that step, and the entry points map `RunResult.IsSuccess` to the process exit code.
+- An element and locator layer: application element definitions behind `IElementRepository` (replaceable through `TryAddSingleton`), platform-neutral `Element` and `Locator` models plus reusable MUI, Shadcn, and Syncfusion component locators in `SharedKernel`, and ordered locator resolution with fallback behind `ILocatorResolver`.
 - An execution-oriented logging pipeline: an `ILogger` facade, a `LogEntry` handoff, and an `IPrintStrategy` rendering seam with separate Interactive and CI layouts.
 - An `IAutomationDriver` lifecycle owned by `RunService`, with start before the load and stop in a `finally` block.
 - Composition-time platform selection in `AddAutomation`, which fails fast on a missing or unknown `SpicyTofu:Platform`.
 - Web automation: a lazy Playwright browser host, named browser sessions, and per-context default and navigation timeouts.
 - Mobile automation: an Appium server launcher, Android emulator and iOS simulator launchers, and named Appium sessions.
 - Per-platform configuration binding plus a `TOFU_`-prefixed environment variable overlay.
+- An xUnit `Tests` project covering the core runtime services and the element repository.
 
 ### Not yet implemented
 
-- **Executing actions against a platform.** `ClickEvent` resolves its element through `IElementRepository` and `ILocatorResolver`, but the click itself is a stub and no other action events exist. A test containing a non-click step fails at the event registry.
-- **Interaction surface.** `IWebPage` and `IMobileSession` expose locator resolution only. There are no click, fill, navigate, or read operations anywhere in the contracts.
-- **Locator resolution on a real page.** The resolver, repository, and component libraries exist, but the framework has no navigation step, so resolution runs against a blank page during a run.
 - **Assertions.** There is no assertion model, and nothing evaluates an expected result.
-- **Result reporting.** Each executed step produces a `TestExecutionResult`, which `RunService` reports through `ILogger` (`ActionCompleted` on success, `ActionFailed` on failure). There is no aggregate result, no pass or fail state, and no report output.
+- **Result reporting.** `RunService` returns a `RunResult` with executed and failed counts and sets the process exit code, but there is no aggregate report, no per-test pass or fail state, and no report output beyond console text.
 - **Parallelism and retries.** `TestExecution:Parallel`, `Workers`, and `Retries` are bound to options but never read by the framework.
-- **Automated tests.** No test projects exist, so `dotnet test` is a no-op.
-- **Mobile interaction.** Appium sessions are created and torn down correctly, but nothing drives the application under test.
+- **Web-only and mobile-only tests.** Only the shared core has tests; the Playwright and Appium paths are not covered by automated tests.
+- **Real end-to-end verification.** The repository ships no sample test definition, so a real browser or device run depends on an application-supplied test JSON and element repository.
+- **Mobile interaction on a real device.** The Appium sessions are created and torn down correctly and the interaction contract is implemented, but no run has been verified against a live device.
 
 ## How Spicy-Tofu Works
 
@@ -96,14 +97,20 @@ appsettings.json + TOFU_ environment variables
                          ▼
              ITestEvent.ExecuteAsync(step)
              resolves the element via
-             IElementRepository + ILocatorResolver
+             IElementRepository + ILocatorResolver,
+             then clicks or fills it (or navigates
+             through INavigator)
              returns a TestExecutionResult
-                         │
-                         ▼
+                          │
+                          ▼
              ILogger.ActionCompleted / ActionFailed
              reports the result
-                         │
-                         ▼
+                          │
+                          ▼
+             RunResult (executed, failed)
+             sets the process exit code
+                          │
+                          ▼
                driver.StopAsync()
                in a finally block
 ```
@@ -116,8 +123,9 @@ What each stage is for:
 - **`RunService`** drives the run and owns the driver lifecycle. It depends on `IAutomationDriver` and never learns which platform it got.
 - **`IJsonService`** reads and deserializes the JSON files and returns the loaded tests. It does not flatten or execute.
 - **`TestsLoadedHandler`** flattens the nested test hierarchy into a flat sequence of `TestExecutionStep` records.
-- **`IEventRegistry`** resolves each step's action name to the `ITestEvent` that executes it, and `RunService` reports the returned `TestExecutionResult` through the logger.
-- **`ITestEvent`** resolves the step's element through `IElementRepository` and `ILocatorResolver` before reporting its result. The event holds no XPath, application knowledge, or platform types.
+- **`IEventRegistry`** resolves each step's action name to the `ITestEvent` that executes it, and `RunService` reports the returned `TestExecutionResult` through the logger. An unknown action is a failed step, not a failed run.
+- **`ITestEvent`** resolves the step's element through `IElementRepository` and `ILocatorResolver` and then acts on the resolved element (`ClickEvent` and `FillEvent`), or drives the platform-neutral `INavigator` (`NavigateEvent`). The event holds no XPath, application knowledge, or platform types.
+- **`RunResult`** carries the executed and failed counts; the entry points map `IsSuccess` to the process exit code (`0` or `1`).
 - **Logging** reports progress as plain text through the `ILogger` and `IPrintStrategy` pair.
 
 The load and the driver lifecycle are coupled deliberately: the driver starts first, and the stop call sits in a `finally` block so it runs on every path, including failures and cancellation.
@@ -147,7 +155,7 @@ A step is a flat action description:
 - **`Target`** identifies the element, for example `UsernameInput`.
 - **`Value`** carries the data for the action.
 
-`Type`, `Attribute`, and `Target` are free-form strings. `Type` is resolved to an action event through `IEventRegistry` (only `click` is registered today). `Attribute` and `Target` are resolved to an application element through `IElementRepository`, which maps them to an `Element` with ordered locator candidates; `ILocatorResolver` then resolves the element on the running platform. The locator strategies are `Role`, `Label`, `Placeholder`, `Text`, `TestId`, `Id`, `Name`, `Css`, `XPath`, and `AccessibilityId`.
+`Type`, `Attribute`, and `Target` are free-form strings. `Type` is resolved to an action event through `IEventRegistry` (`navigate`, `click`, and `fill` are registered today). `Attribute` and `Target` are resolved to an application element through `IElementRepository`, which maps them to an `Element` with ordered locator candidates; `ILocatorResolver` then resolves the element on the running platform. The locator strategies are `Role`, `Label`, `Placeholder`, `Text`, `TestId`, `Id`, `Name`, `Css`, `XPath`, and `AccessibilityId`.
 
 A representative file, illustrative only, since the repository does not yet ship a sample test definition:
 
@@ -196,6 +204,7 @@ The solution follows Domain Driven Design with a shared core and two platform ex
 | `Infrastructure` | class library | `Application`, `Domain`, `SharedKernel` | Outward-facing concerns: the Playwright and Appium implementations, dependency injection, the JSON loader, the run service, the element repository, and console logging |
 | `Web` | executable | `Application`, `Domain`, `Infrastructure` | The web composition root and entry point |
 | `Mobile` | executable | `Application`, `Domain`, `Infrastructure` | The mobile composition root and entry point |
+| `Tests` | test library | `Application`, `Domain`, `Infrastructure`, `SharedKernel` | xUnit tests for the shared core |
 
 Two points are worth calling out because they are easy to get wrong:
 
@@ -224,7 +233,7 @@ Both platform drivers also implement `IAsyncDisposable`. Sessions are named, and
 
 The important consequence is that `RunService` takes an `IAutomationDriver` through constructor injection and calls only the base members. It has no idea whether it is driving Chromium or an Android emulator, and it never needs to know. Any future step executor inherits the same property.
 
-The contracts currently stop at lifecycle and session management. The interaction surface that would sit on `IWebPage` and `IMobileSession` is not defined yet.
+The contracts cover lifecycle, session management, navigation, and element interaction: `IWebPage` and `IMobileSession` expose `ResolveAsync` and `NavigateAsync`, and `IResolvedElement` exposes `ClickAsync`, `FillAsync`, and `GetTextAsync`. `INavigator` is the platform-neutral navigation seam used by `NavigateEvent`.
 
 For the full contract, see [Automation Driver Contract](docs/technical/automation-driver-contract.md), [Web Automation](docs/technical/web-automation.md), and [Mobile Automation](docs/technical/mobile-automation.md).
 
@@ -355,6 +364,7 @@ spicy-tofu/
 ├── Infrastructure/         Playwright and Appium implementations, DI, JSON loading, element repository, console logging
 ├── Web/                    web composition root and entry point, web appsettings.json
 ├── Mobile/                 mobile composition root and entry point, mobile appsettings.json
+├── Tests/                  xUnit tests for the shared core
 ├── docs/
 │   ├── technical/          how the code works
 │   └── wiki/               why it is built this way, platform notes, known issues
@@ -365,7 +375,7 @@ spicy-tofu/
 └── README.md               this file
 ```
 
-The six projects sit at the top level in same-named folders. The Playwright and Appium implementations live under `Infrastructure/Automation/`, split into `Web` and `Mobile` subfolders, not under the `Web` and `Mobile` projects.
+The seven projects sit at the top level in same-named folders. The Playwright and Appium implementations live under `Infrastructure/Automation/`, split into `Web` and `Mobile` subfolders, not under the `Web` and `Mobile` projects.
 
 ## Getting Started
 
@@ -402,7 +412,7 @@ dotnet run --project Web
 dotnet run --project Mobile
 ```
 
-Before either command is useful, set `Projects:RootDirectory` to a folder containing test definition JSON, and make sure the relevant platform section is configured. Note that the only step handler today (`ClickEvent`) is a stub that returns success without acting on the driver, so a successful exit does not mean any test passed.
+Before either command is useful, set `Projects:RootDirectory` to a folder containing test definition JSON, and make sure the relevant platform section is configured. The run exits `0` when no step failed and `1` otherwise. Note that a step is a success when its action runs without error; there are no assertions yet, so a successful exit does not mean the application under test behaved as expected.
 
 ### Test
 
@@ -410,7 +420,7 @@ Before either command is useful, set `Projects:RootDirectory` to a folder contai
 dotnet test spicy-tofu.sln
 ```
 
-This is currently a no-op, because the solution contains no test projects.
+The `Tests` xUnit project covers the shared core: `TestsLoadedHandler`, `EventService`, `RunService` (including the unknown-action and throwing-event paths and driver stop-on-failure), `JsonService`, and `SampleElementRepository`. It uses fakes for the driver, event registry, and logger, so it does not launch a browser or a device.
 
 For the full setup matrix, see [Setup and Commands](docs/technical/setup-and-commands.md).
 
@@ -418,13 +428,13 @@ For the full setup matrix, see [Setup and Commands](docs/technical/setup-and-com
 
 ```bash
 dotnet build spicy-tofu.sln                              # build every project
-dotnet test spicy-tofu.sln                               # runs as a no-op today
+dotnet test spicy-tofu.sln                               # runs the Tests xUnit project
 dotnet format spicy-tofu.sln --verify-no-changes         # style check
 ```
 
 `Directory.Build.Props` sets the analysis level to `latest-recommended` and enforces code style during the build, so `dotnet build` is also a style gate. `TreatWarningsAsErrors` applies to Release builds only.
 
-`dotnet format` currently reports violations in files written earlier in the project's history. The check is expected to pass before a change is considered complete, but it is not green today. See [Known Limitations](#known-limitations).
+The format check passes.
 
 [AGENTS.md](AGENTS.md) holds the repository conventions: architecture rules, configuration ownership, documentation and changelog obligations, and the commands above.
 
@@ -454,7 +464,7 @@ Start with the [documentation index](docs/README.md) for the full table of conte
 
 ### Runtime
 
-- [Runtime Pipeline](docs/technical/runtime-pipeline.md) - from JSON files to executed steps: `JsonService`, `TestsLoadedHandler`, `IEventRegistry`, `ITestEvent`, `TestExecutionResult`, and the driver lifecycle around the run.
+- [Runtime Pipeline](docs/technical/runtime-pipeline.md) - from JSON files to executed steps: `JsonService`, `TestsLoadedHandler`, `IEventRegistry`, `ITestEvent`, `TestExecutionResult`, `RunResult`, per-step failure isolation, and the driver lifecycle around the run.
 - [Logging](docs/technical/logging.md) - the `ILogger` API, `LogEntry`, the `IPrintStrategy` seam, and the Interactive and CI layouts.
 
 ### Automation
@@ -484,11 +494,9 @@ The reasoning behind each of these is recorded in [Design Decisions](docs/wiki/d
 
 ## Known Limitations
 
-- **Actions are not really executed.** A run loads, flattens, and dispatches steps to their `ITestEvent`, which resolves the element through `IElementRepository` and `ILocatorResolver`, but `ClickEvent` does not perform the click and no other action events exist. Nothing interacts with a browser or a device.
-- **No assertions or result reporting.** There is no pass or fail state, and no report output beyond console text.
-- **No test projects.** `dotnet test` is a no-op, and the framework itself is untested.
-- **The format check is not green.** `dotnet format spicy-tofu.sln --verify-no-changes` reports violations in older files.
-- **Compilation warnings in Debug builds.** `CS0108` and `CS8618` warnings come from the domain model. They are not errors because `TreatWarningsAsErrors` applies to Release only.
+- **No assertions or per-test result reporting.** A step is a success when its action runs without error, and `RunService` returns executed and failed counts that set the exit code. There is no assertion model, no per-test pass or fail state, and no report output beyond console text.
+- **No web-only or mobile-only tests.** The `Tests` project covers the shared core with fakes; the Playwright and Appium paths are not covered by automated tests.
+- **No sample test definition.** The repository ships no runnable test JSON, so an end-to-end run depends on an application-supplied test JSON and element repository.
 - **Mobile tooling is a manual prerequisite.** Appium, the Android SDK, and any AVD must already be installed and configured.
 - **No LICENSE file.** The repository does not currently state reuse terms.
 - **`Web/appsettings.json` ships a machine-specific `Projects:RootDirectory`.** Replace it locally or override it with a `TOFU_` environment variable.

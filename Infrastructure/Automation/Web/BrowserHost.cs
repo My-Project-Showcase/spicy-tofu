@@ -11,7 +11,7 @@ public sealed class BrowserHost : IAsyncDisposable
     private readonly SemaphoreSlim _sync = new(1, 1);
     private IPlaywright? _playwright;
     private volatile IBrowser? _browser;
-    
+
     public BrowserHost(IOptions<PlaywrightConfig> playwrightConfig)
     {
         _playwrightConfig = playwrightConfig;

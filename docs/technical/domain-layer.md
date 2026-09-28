@@ -1,6 +1,6 @@
 ---
 title: Domain Layer
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../../Domain/Domain.csproj
   - ../../Domain/Shared/AggregateRoot.cs
@@ -9,6 +9,7 @@ sources:
   - ../../Domain/Entities/TestCases/TestStep.cs
   - ../../Domain/Entities/Execution/TestExecutionStep.cs
   - ../../Domain/Entities/Execution/TestExecutionResult.cs
+  - ../../Domain/Entities/Execution/RunResult.cs
   - ../../Domain/Runtime/Environment/TofuConfiguration.cs
   - ../../Domain/Runtime/Environment/Configuration/SpicyTofuConfig.cs
   - ../../Domain/Runtime/Environment/Configuration/TestExecution.cs
@@ -27,7 +28,7 @@ The `Domain` project models the framework's own domain. It does not model the bu
 
 ## Shared base type
 
-`Domain.Shared.AggregrateRoot`: note the typo in the type name. The file is `AggregateRoot.cs` but the class is spelled `AggregrateRoot`. It holds `Id`, `Name`, and `Description` string properties. Test case entity classes inherit from it.
+`Domain.Shared.AggregrateRoot`: note the typo in the type name. The file is `AggregateRoot.cs` but the class is spelled `AggregrateRoot`. It holds nullable `Id`, `Name`, and `Description` string properties. Test case entity classes inherit from it.
 
 ## Locator and element models
 
@@ -35,10 +36,11 @@ The locator and element models live in `SharedKernel`, not `Domain`: `SharedKern
 
 ## Test case models
 
-- `Domain.Entities.TestCases.Test`: inherits `AggregrateRoot`. Re-declares `Id` and `Name` (strings) and adds `Workflows` (`List<Workflow>`). Re-declaring `Id` and `Name` hides the base members, which produces `CS0108` compiler warnings when `TreatWarningsAsErrors` is off (Debug builds).
-- `Domain.Entities.TestCases.Workflow`: holds `Id`, `Name`, and `Steps` (`List<TestSteps>`).
-- `Domain.Entities.TestCases.TestSteps`: note the file `TestStep.cs` contains a class named `TestSteps`, not `TestStep`. It holds `Type`, `Attribute`, `Target`, and `Value` strings. They are flattened into execution steps by the runtime pipeline, but no action executes them yet.
+- `Domain.Entities.TestCases.Test`: inherits `AggregrateRoot`. Re-declares `Id` and `Name` (nullable strings) with `new`, and adds nullable `Workflows` (`List<Workflow>?`). The `new` keyword makes the hiding of the base members explicit, so the model no longer emits `CS0108`.
+- `Domain.Entities.TestCases.Workflow`: holds nullable `Id`, `Name`, and `Steps` (`List<TestSteps>?`).
+- `Domain.Entities.TestCases.TestSteps`: note the file `TestStep.cs` contains a class named `TestSteps`, not `TestStep`. It holds nullable `Type`, `Attribute`, `Target`, and `Value` strings. They are flattened into execution steps by the runtime pipeline, and the `navigate`, `click`, and `fill` actions execute them.
 - `Domain.Entities.Execution.TestExecutionStep`: a record composing a `Test`, a `Workflow`, and a `TestSteps` instance. It is the execution representation produced when the loaded test hierarchy is flattened. See [Runtime Pipeline](./runtime-pipeline.md).
+- `Domain.Entities.Execution.RunResult`: a record with the `Executed` and `Failed` step counts and a computed `IsSuccess` (`Failed == 0`). `RunService` returns it and the entry points map it to the process exit code.
 
 ## Configuration option classes
 

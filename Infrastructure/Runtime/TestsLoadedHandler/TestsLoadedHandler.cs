@@ -6,7 +6,7 @@ namespace Infrastructure.Runtime.TestExecution;
 public sealed class TestsLoadedHandler
 {
     public IEnumerable<TestExecutionStep> Flatten(List<Test> tests)
-        => tests.SelectMany(test => test.Workflows
-            .SelectMany(workflow => workflow.Steps
+        => tests.SelectMany(test => (test.Workflows ?? new List<Workflow>())
+            .SelectMany(workflow => (workflow.Steps ?? new List<TestSteps>())
                 .Select(step => new TestExecutionStep(test, workflow, step))));
 }

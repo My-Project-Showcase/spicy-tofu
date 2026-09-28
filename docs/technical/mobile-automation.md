@@ -1,12 +1,13 @@
 ---
 title: Mobile Automation
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../../Infrastructure/Automation/Mobile/MobileHost.cs
   - ../../Infrastructure/Automation/Mobile/MobileDriver.cs
   - ../../Infrastructure/Automation/Mobile/MobileSession.cs
   - ../../Infrastructure/Automation/Mobile/MobileResolvedElement.cs
   - ../../Infrastructure/Automation/Mobile/MobileLocatorResolver.cs
+  - ../../Infrastructure/Automation/Mobile/MobileNavigator.cs
   - ../../Infrastructure/Automation/Mobile/AppiumServerLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/IDeviceLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/AndroidEmulatorLauncher.cs
@@ -92,17 +93,23 @@ Both implement `Infrastructure.Automation.Mobile.Devices.IDeviceLauncher`, which
 
 Presence is checked with `FindElements`. Web-only strategies (Role, Label, Placeholder, Text, TestId, Css) return null, so the resolver skips them on mobile.
 
+`NavigateAsync(url)` calls the Appium driver's `Navigate().GoToUrl(url)`.
+
 ## MobileResolvedElement
 
-`MobileResolvedElement` implements `IResolvedElement` with the matched `Locator` and the Selenium `IWebElement` handle.
+`MobileResolvedElement` implements `IResolvedElement` with the matched `Locator` and the Selenium `IWebElement` handle. It implements the interaction methods by forwarding to the handle: `ClickAsync` calls `IWebElement.Click`, `FillAsync` calls `IWebElement.SendKeys`, and `GetTextAsync` returns `IWebElement.Text`.
 
 ## MobileLocatorResolver
 
 `MobileLocatorResolver` implements `ILocatorResolver`. It walks `Element.Locators` in order against the `default` session, calls `ResolveAsync` for each, and returns the first match. When nothing matches it throws `InvalidOperationException`. It is registered as `ILocatorResolver` for the mobile platform.
 
+## MobileNavigator
+
+`MobileNavigator` implements `INavigator` by forwarding `NavigateAsync(url)` to the `default` `IMobileSession.NavigateAsync`. It is registered as `INavigator` for the mobile platform, so the platform-neutral `NavigateEvent` can navigate without referencing `IMobileDriver`.
+
 ## DI registration
 
-`AddAutomation` registers `MobileHost` as a singleton and `MobileDriver` as a singleton, forwarding `IMobileDriver` and `IAutomationDriver` to that same instance, when `SpicyTofu:Platform` is `Mobile`. See [Dependency Injection](./dependency-injection.md).
+`AddAutomation` registers `MobileHost` as a singleton and `MobileDriver` as a singleton, forwarding `IMobileDriver` and `IAutomationDriver` to that same instance, and registers `MobileLocatorResolver` as `ILocatorResolver` and `MobileNavigator` as `INavigator`, when `SpicyTofu:Platform` is `Mobile`. See [Dependency Injection](./dependency-injection.md).
 
 ## Lifecycle summary
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 
+using Application.Logging;
 using Application.Runtime.JsonService;
 
 using Domain.Entities.TestCases;
@@ -11,10 +12,12 @@ namespace Infrastructure.Runtime.JsonService;
 public class JsonService : IJsonService
 {
     private readonly IOptions<Projects> _projectsConfig;
+    private readonly ILogger _logger;
 
-    public JsonService(IOptions<Projects> projectsConfig)
+    public JsonService(IOptions<Projects> projectsConfig, ILogger logger)
     {
         _projectsConfig = projectsConfig;
+        _logger = logger;
     }
 
     public async Task<Tuple<bool, List<Test>>> LoadJson()
@@ -47,7 +50,7 @@ public class JsonService : IJsonService
             }
             catch (JsonException)
             {
-                Console.WriteLine($"{testFile} was unable to load.");
+                _logger.Warning($"{testFile} was unable to load.");
             }
         }
 

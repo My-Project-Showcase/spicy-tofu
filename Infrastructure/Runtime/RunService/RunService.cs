@@ -3,6 +3,7 @@ using Application.Logging;
 using Application.Runtime.JsonService;
 using Application.Runtime.RunService;
 
+using Domain.Entities.Execution;
 using Domain.Events.EventsRegistry;
 
 using Infrastructure.Runtime.TestExecution;
@@ -31,9 +32,12 @@ public sealed class RunService : IRunService
         _testsLoadedHandler = testsLoadedHandler;
     }
 
-    public async Task RunAsync()
+    public async Task<RunResult> RunAsync()
     {
         _logger.Section("Test Execution");
+
+        var executed = 0;
+        var failed = 0;
 
         try
         {
@@ -46,7 +50,7 @@ public sealed class RunService : IRunService
             if (!testResult.Item1)
             {
                 _logger.Warning("The test directory could not be loaded.");
-                return;
+                return new RunResult(executed, failed);
             }
 
             var steps = _testsLoadedHandler.Flatten(testResult.Item2);
@@ -54,10 +58,9 @@ public sealed class RunService : IRunService
             foreach (var step in steps)
             {
                 _logger.ActionStarted(step);
+                executed++;
 
-                var testEvent = _eventRegistry.Get(step.Step.Type);
-
-                var result = await testEvent.ExecuteAsync(step);
+                var result = await ExecuteStepAsync(step);
 
                 if (result.IsSuccess)
                 {
@@ -65,13 +68,41 @@ public sealed class RunService : IRunService
                 }
                 else
                 {
+                    failed++;
                     _logger.ActionFailed(step, result.Error);
                 }
             }
+
+            _logger.Info($"Executed {executed} step(s), {failed} failed.");
+
+            return new RunResult(executed, failed);
         }
         finally
         {
             await _driver.StopAsync();
+        }
+    }
+
+    private async Task<TestExecutionResult> ExecuteStepAsync(TestExecutionStep step)
+    {
+        var action = step.Step.Type ?? string.Empty;
+
+        if (!_eventRegistry.TryGet(action, out var testEvent) || testEvent is null)
+        {
+            return new TestExecutionResult
+            {
+                IsSuccess = false,
+                Error = $"No event registered for action '{action}'.",
+            };
+        }
+
+        try
+        {
+            return await testEvent.ExecuteAsync(step);
+        }
+        catch (Exception ex)
+        {
+            return new TestExecutionResult { IsSuccess = false, Error = ex.Message };
         }
     }
 }

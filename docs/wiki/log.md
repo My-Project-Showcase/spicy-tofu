@@ -1,3 +1,13 @@
+## [2026-09-28] update | Web interaction slice: navigate, click, fill, results, tests
+
+- Added interaction methods to `IResolvedElement` (`ClickAsync`, `FillAsync`, `GetTextAsync`) and `NavigateAsync` to `IWebPage` and `IMobileSession`; added the platform-neutral `INavigator` seam with `WebNavigator` and `MobileNavigator`, registered per platform in `AddAutomation`.
+- `ClickEvent` now performs the click; added `FillEvent` and implemented the empty `NavigateEvent` stub; `AddEvents` registers all three.
+- `RunService` now isolates each step with `IEventRegistry.TryGet` and a try/catch, counts executed and failed steps, and returns a `RunResult`; `Web/Program.cs` and `Mobile/Program.cs` map `IsSuccess` to the process exit code.
+- `IElementRepository` registration switched to `TryAddSingleton` so an application can supply its own repository; `TestsLoadedHandler` now tolerates null `Workflows`/`Steps`; `JsonService` reports parse failures through `ILogger`.
+- Made domain model properties nullable and marked the `Test` overrides with `new`, clearing the `CS8618` and `CS0108` warnings; fixed the remaining whitespace and final-newline violations so the format check passes.
+- Added the `Tests` xUnit project covering `TestsLoadedHandler`, `EventService`, `RunService`, `JsonService`, and `SampleElementRepository`.
+- Updated `runtime-pipeline.md`, `elements-and-locators.md`, `automation-driver-contract.md`, `web-automation.md`, `mobile-automation.md`, `domain-layer.md`, `dependency-injection.md`, `architecture-overview.md`, `setup-and-commands.md`, `design-decisions.md`, `known-issues-and-discrepancies.md`, `index.md`, `docs/README.md`, `AGENTS.md`, and `CHANGELOG.md`.
+
 ## [2026-09-27] update | Element repository and locator resolver
 
 - Added the element and locator layer: `SharedKernel` element and locator models plus MUI, Shadcn, and Syncfusion component libraries; `Application` `IElementRepository`, `ILocatorResolver`, and `IResolvedElement`; and `Infrastructure` `SampleElementRepository`, `WebLocatorResolver`, `MobileLocatorResolver`, `WebResolvedElement`, and `MobileResolvedElement`, with `ResolveAsync` on `IWebPage` and `IMobileSession`.

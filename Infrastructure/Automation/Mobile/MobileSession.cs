@@ -33,6 +33,12 @@ public sealed class MobileSession : IMobileSession
         return Task.FromResult(resolved);
     }
 
+    public Task NavigateAsync(string url)
+    {
+        Driver.Navigate().GoToUrl(url);
+        return Task.CompletedTask;
+    }
+
     private static By? TryBuildBy(Locator locator) =>
         locator.Strategy switch
         {

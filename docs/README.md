@@ -15,17 +15,17 @@ These pages are maintained by the agent and steered by humans. If a page and the
 
 | Page | Summary | Updated |
 |---|---|---|
-| [architecture-overview.md](./technical/architecture-overview.md) | Solution layout, the core layers, the `SharedKernel`, project references, dependency direction, and package references. | 2026-09-27 |
-| [domain-layer.md](./technical/domain-layer.md) | Domain models, the aggregate root base, the execution step and result records, and the configuration option classes. | 2026-09-27 |
+| [architecture-overview.md](./technical/architecture-overview.md) | Solution layout, the core layers, the `SharedKernel`, project references (including the `Tests` project), dependency direction, and package references. | 2026-09-28 |
+| [domain-layer.md](./technical/domain-layer.md) | Domain models (now nullable), the aggregate root base, the execution step, result, and run result records, and the configuration option classes. | 2026-09-28 |
 | [configuration.md](./technical/configuration.md) | Configuration sections, which platform binds what, environment variable overlay, and binding gaps. | 2026-09-27 |
-| [dependency-injection.md](./technical/dependency-injection.md) | Composition roots, DI extensions, runtime services, the single `AddAutomation` platform-selection point, driver and resolver registration, and host disposal. | 2026-09-27 |
-| [runtime-pipeline.md](./technical/runtime-pipeline.md) | How test case JSON becomes executed steps and how the driver is started and stopped around the run: `JsonService`, `TestsLoadedHandler`, `IEventRegistry`, `ITestEvent`, `TestExecutionResult`, and the `RunService` orchestration. | 2026-09-27 |
-| [elements-and-locators.md](./technical/elements-and-locators.md) | The element repository, the element and locator models, the locator resolver, and the `SharedKernel` component libraries. | 2026-09-27 |
+| [dependency-injection.md](./technical/dependency-injection.md) | Composition roots, DI extensions, runtime services, the single `AddAutomation` platform-selection point, driver, resolver, and navigator registration, and host disposal. | 2026-09-28 |
+| [runtime-pipeline.md](./technical/runtime-pipeline.md) | How test case JSON becomes executed steps and how the driver is started and stopped around the run: `JsonService`, `TestsLoadedHandler`, `IEventRegistry`, `ITestEvent`, `TestExecutionResult`, `RunResult`, per-step failure isolation, and the `RunService` orchestration. | 2026-09-28 |
+| [elements-and-locators.md](./technical/elements-and-locators.md) | The element repository, the element and locator models, the locator resolver, the resolved-element interaction methods, and the `SharedKernel` component libraries. | 2026-09-28 |
 | [logging.md](./technical/logging.md) | The execution-oriented `ILogger` facade, `LogEntry`/`LogKind`, `Locator`, the `IPrintStrategy` seam, and CI/Interactive rendering. | 2026-09-27 |
-| [automation-driver-contract.md](./technical/automation-driver-contract.md) | The core automation interfaces: `IAutomationDriver` (lifecycle base), `IWebDriver`, `IWebPage`, `IWebSession`, `WebContextOptions`, `IMobileDriver`, `IMobileSession`, `MobileContextOptions`, `IResolvedElement`, and platform wiring. | 2026-09-27 |
-| [web-automation.md](./technical/web-automation.md) | The Playwright implementation: `BrowserHost`, `WebDriver`, `BrowserSession`, `WebPage`, `WebLocatorResolver`, and timeout wiring. | 2026-09-27 |
-| [mobile-automation.md](./technical/mobile-automation.md) | The Appium implementation: `MobileHost`, `AppiumServerLauncher`, the Android and iOS device launchers, `MobileDriver`, `MobileSession`, and `MobileLocatorResolver`. | 2026-09-27 |
-| [setup-and-commands.md](./technical/setup-and-commands.md) | Prerequisites, build/test/format commands, the Playwright browser install step, Appium and mobile device setup, and configuration sources. | 2026-09-27 |
+| [automation-driver-contract.md](./technical/automation-driver-contract.md) | The core automation interfaces: `IAutomationDriver` (lifecycle base), `IWebDriver`, `IWebPage`, `IWebSession`, `WebContextOptions`, `IMobileDriver`, `IMobileSession`, `MobileContextOptions`, `INavigator`, `IResolvedElement`, and platform wiring. | 2026-09-28 |
+| [web-automation.md](./technical/web-automation.md) | The Playwright implementation: `BrowserHost`, `WebDriver`, `BrowserSession`, `WebPage`, `WebResolvedElement`, `WebLocatorResolver`, `WebNavigator`, and timeout wiring. | 2026-09-28 |
+| [mobile-automation.md](./technical/mobile-automation.md) | The Appium implementation: `MobileHost`, `AppiumServerLauncher`, the Android and iOS device launchers, `MobileDriver`, `MobileSession`, `MobileResolvedElement`, `MobileLocatorResolver`, and `MobileNavigator`. | 2026-09-28 |
+| [setup-and-commands.md](./technical/setup-and-commands.md) | Prerequisites, build/test/format commands (the `Tests` project now runs), the Playwright browser install step, Appium and mobile device setup, and configuration sources. | 2026-09-28 |
 
 ### wiki/
 

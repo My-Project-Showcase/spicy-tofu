@@ -4,7 +4,7 @@ This is the index of every page in the wiki. It is grouped by category. The wiki
 
 ## Architecture
 
-- [Design Decisions](./design-decisions.md): why `IWebPage` keeps Playwright out of the core, why sessions are named, why the browser host is a semaphore-guarded singleton, the single `AddAutomation` composition point, why the run service owns the driver lifecycle, why loading and execution are separate with no event handoff, why the element repository is the system-under-test boundary, why component-library knowledge lives in `SharedKernel`, why the resolver owns locator selection, why mobile starts the Appium server and device implicitly with a reuse-and-own lifecycle, and why the mobile config class is `AppiumConfig`.
+- [Design Decisions](./design-decisions.md): why `IWebPage` keeps Playwright out of the core, why sessions are named, why the browser host is a semaphore-guarded singleton, the single `AddAutomation` composition point, why the run service owns the driver lifecycle, why loading and execution are separate with no event handoff, why the element repository is the system-under-test boundary (and is replaceable through `TryAddSingleton`), why interaction methods live on `IResolvedElement`, why navigation is a platform-neutral `INavigator`, why steps are isolated with a `RunResult`, why component-library knowledge lives in `SharedKernel`, why the resolver owns locator selection, why mobile starts the Appium server and device implicitly with a reuse-and-own lifecycle, and why the mobile config class is `AppiumConfig`.
 
 ## Platforms
 
@@ -12,7 +12,7 @@ This is the index of every page in the wiki. It is grouped by category. The wiki
 
 ## Known Issues
 
-- [Known Issues and Discrepancies](./known-issues-and-discrepancies.md): stale AGENTS.md claims, empty or unused code, naming oddities, and the format check result.
+- [Known Issues and Discrepancies](./known-issues-and-discrepancies.md): stale AGENTS.md claims, empty or unused code, naming oddities, the format check result, and what the `Tests` project covers.
 
 ## Related
 

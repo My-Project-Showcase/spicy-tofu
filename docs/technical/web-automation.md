@@ -1,6 +1,6 @@
 ---
 title: Web Automation
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../../Infrastructure/Automation/Web/BrowserHost.cs
   - ../../Infrastructure/Automation/Web/WebDriver.cs
@@ -8,6 +8,7 @@ sources:
   - ../../Infrastructure/Automation/Web/WebPage.cs
   - ../../Infrastructure/Automation/Web/WebResolvedElement.cs
   - ../../Infrastructure/Automation/Web/WebLocatorResolver.cs
+  - ../../Infrastructure/Automation/Web/WebNavigator.cs
   - ../../Infrastructure/Extensions/DependencyInjection.cs
 ---
 
@@ -68,13 +69,19 @@ There is no `IBrowserHost` interface; DI registers the concrete `BrowserHost`.
 
 Presence is checked with `CountAsync`. `AccessibilityId` is not supported on web and returns null.
 
+`NavigateAsync(url)` calls Playwright's `IPage.GotoAsync(url)`.
+
 ## WebResolvedElement
 
-`WebResolvedElement` implements `IResolvedElement` with the matched `Locator` and the Playwright `ILocator` handle.
+`WebResolvedElement` implements `IResolvedElement` with the matched `Locator` and the Playwright `ILocator` handle. It implements the interaction methods by forwarding to the handle: `ClickAsync` calls `ILocator.ClickAsync`, `FillAsync` calls `ILocator.FillAsync`, and `GetTextAsync` returns `ILocator.TextContentAsync` (empty string when there is no text).
 
 ## WebLocatorResolver
 
 `WebLocatorResolver` implements `ILocatorResolver`. It walks `Element.Locators` in order, calls `IWebDriver.Page.ResolveAsync` for each, and returns the first match. When nothing matches it throws `InvalidOperationException`. It is registered as `ILocatorResolver` for the web platform.
+
+## WebNavigator
+
+`WebNavigator` implements `INavigator` by forwarding `NavigateAsync(url)` to `IWebDriver.Page.NavigateAsync`. It is registered as `INavigator` for the web platform, so the platform-neutral `NavigateEvent` can navigate without referencing `IWebDriver`.
 
 ## Lifecycle summary
 

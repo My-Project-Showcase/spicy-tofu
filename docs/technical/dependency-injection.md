@@ -1,20 +1,25 @@
 ---
 title: Dependency Injection
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../../Infrastructure/Extensions/DependencyInjection.cs
   - ../../Application/Automation/IAutomationDriver.cs
+  - ../../Application/Automation/INavigator.cs
   - ../../Application/Elements/IElementRepository.cs
   - ../../Application/Locators/ILocatorResolver.cs
   - ../../Infrastructure/Elements/SampleElementRepository.cs
   - ../../Infrastructure/Automation/Web/WebLocatorResolver.cs
+  - ../../Infrastructure/Automation/Web/WebNavigator.cs
   - ../../Infrastructure/Automation/Mobile/MobileLocatorResolver.cs
+  - ../../Infrastructure/Automation/Mobile/MobileNavigator.cs
   - ../../Web/Extension/WebExtensions.cs
   - ../../Mobile/Extensions/MobileExtensions.cs
   - ../../Web/Program.cs
   - ../../Mobile/Program.cs
   - ../../Infrastructure/Runtime/EventService/EventService.cs
   - ../../Infrastructure/Events/ClickEvent.cs
+  - ../../Infrastructure/Events/FillEvent.cs
+  - ../../Infrastructure/Events/NavigateEvent.cs
   - ../../Domain/Events/ITestEvent.cs
   - ../../Domain/Events/EventsRegistry/IEventRegistry.cs
 ---
@@ -28,8 +33,8 @@ The web and mobile executables are the composition roots. Both read configuratio
 `Web/Program.cs` builds the generic host with `Host.CreateDefaultBuilder(args)`, sets the content root to `AppContext.BaseDirectory` so `appsettings.json` is read from the build output folder regardless of the working directory, and calls, in order:
 
 1. `AddWebExtensions` (from `WebExtensions`): loads `appsettings.json`, overlays `TOFU_`-prefixed environment variables, binds `SpicyTofuConfig`, `Projects`, `PlaywrightConfig`, and `TestExecution`.
-2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which binds the `Logging` section and registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), `TestsLoadedHandler`, `IEventRegistry` (`EventService`), and `IElementRepository` (`SampleElementRepository`). `AddServices` then calls `AddEvents`, which registers the `ITestEvent` implementations (`ClickEvent` today).
-3. `AddAutomation` (from `Infrastructure.Extensions`): the single platform-selection point. It registers the platform driver and the platform `ILocatorResolver` (`WebLocatorResolver` for web, `MobileLocatorResolver` for mobile).
+2. `AddInfrastructureDependencies` (from `Infrastructure.Extensions`): calls `AddServices`, which binds the `Logging` section and registers the logging services and the runtime services, all singletons: `ILogger` (`Logger`), `IPrintStrategy` (`ConsolePrintStrategy`), `IJsonService` (`JsonService`), `IRunService` (`RunService`), `TestsLoadedHandler`, `IEventRegistry` (`EventService`), and `IElementRepository` (`SampleElementRepository`, via `TryAddSingleton`). `AddServices` then calls `AddEvents`, which registers the `ITestEvent` implementations (`ClickEvent`, `FillEvent`, `NavigateEvent`).
+3. `AddAutomation` (from `Infrastructure.Extensions`): the single platform-selection point. It registers the platform driver, the platform `ILocatorResolver` (`WebLocatorResolver` for web, `MobileLocatorResolver` for mobile), and the platform `INavigator` (`WebNavigator` or `MobileNavigator`).
 
 `Program.cs` owns the host with `using IHost host = ...` so the host and its singleton services are disposed when the run ends (see [Driver Lifecycle and Host Disposal](#driver-lifecycle-and-host-disposal)). After the host is built it resolves `IRunService` from the container and calls `RunAsync()`, which drives the runtime pipeline. See [Runtime Pipeline](./runtime-pipeline.md).
 
@@ -37,8 +42,8 @@ The web and mobile executables are the composition roots. Both read configuratio
 
 `AddAutomation` lives in `Infrastructure.Extensions.DependencyInjection`. It is the only place in the codebase that reads `SpicyTofu:Platform` and the only place that branches on platform. It reads the value once during service registration and registers exactly one platform:
 
-- When the value is `Web` (case-insensitive): registers `BrowserHost` (singleton), `WebDriver` (singleton), forwards `IWebDriver` and `IAutomationDriver` to that same `WebDriver` instance, and registers `ILocatorResolver` as `WebLocatorResolver` (singleton).
-- When the value is `Mobile` (case-insensitive): registers `MobileHost` (singleton), `MobileDriver` (singleton), forwards `IMobileDriver` and `IAutomationDriver` to that same `MobileDriver` instance, and registers `ILocatorResolver` as `MobileLocatorResolver` (singleton).
+- When the value is `Web` (case-insensitive): registers `BrowserHost` (singleton), `WebDriver` (singleton), forwards `IWebDriver` and `IAutomationDriver` to that same `WebDriver` instance, and registers `ILocatorResolver` as `WebLocatorResolver` and `INavigator` as `WebNavigator` (both singletons).
+- When the value is `Mobile` (case-insensitive): registers `MobileHost` (singleton), `MobileDriver` (singleton), forwards `IMobileDriver` and `IAutomationDriver` to that same `MobileDriver` instance, and registers `ILocatorResolver` as `MobileLocatorResolver` and `INavigator` as `MobileNavigator` (both singletons).
 - When the value is missing, empty, or anything else: throws `InvalidOperationException` with a message naming the invalid value. A bad platform fails at composition time, before any test execution starts, and never falls back to a default platform.
 
 Each forward uses `sp => sp.GetRequiredService<WebDriver>()` (or `MobileDriver`), so the concrete driver, its platform interface, and `IAutomationDriver` all resolve to the same singleton instance. A second `AddSingleton<Interface, Implementation>` registration would create a second instance with its own session registry, so forwards are used instead.
@@ -59,7 +64,7 @@ Like the web entry point, the mobile program owns the host with `using IHost hos
 
 ## Events registry
 
-`IEventRegistry` is implemented by `EventService`, which is constructed from every registered `ITestEvent` and indexes them by their `[Action(...)]` attribute name (case-insensitive). `AddServices` registers `IEventRegistry` and then calls `AddEvents`, which registers each `ITestEvent` implementation; `ClickEvent` is the only one today. `RunService` depends on `IEventRegistry` and never on a concrete event. See [Runtime Pipeline](./runtime-pipeline.md).
+`IEventRegistry` is implemented by `EventService`, which is constructed from every registered `ITestEvent` and indexes them by their `[Action(...)]` attribute name (case-insensitive). `AddServices` registers `IEventRegistry` and then calls `AddEvents`, which registers each `ITestEvent` implementation (`ClickEvent`, `FillEvent`, `NavigateEvent`). `RunService` depends on `IEventRegistry` and never on a concrete event, and resolves each step with `TryGet` so an unknown action fails only that step. See [Runtime Pipeline](./runtime-pipeline.md).
 
 ## Driver lifecycle and host disposal
 
@@ -81,17 +86,21 @@ Driver start/stop and host disposal are separate responsibilities.
 | `TestsLoadedHandler` | `AddServices` | singleton | always |
 | `IEventRegistry` / `EventService` | `AddServices` | singleton | always |
 | `ITestEvent` / `ClickEvent` | `AddEvents` (called by `AddServices`) | singleton | always |
-| `IElementRepository` / `SampleElementRepository` | `AddServices` | singleton | always |
+| `ITestEvent` / `FillEvent` | `AddEvents` (called by `AddServices`) | singleton | always |
+| `ITestEvent` / `NavigateEvent` | `AddEvents` (called by `AddServices`) | singleton | always |
+| `IElementRepository` / `SampleElementRepository` | `AddServices` (`TryAddSingleton`) | singleton | always, overridable by the application |
 | `BrowserHost` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `WebDriver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `IWebDriver` (forward to `WebDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `IAutomationDriver` (forward to `WebDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `ILocatorResolver` / `WebLocatorResolver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
+| `INavigator` / `WebNavigator` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Web` |
 | `MobileHost` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | `MobileDriver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | `IMobileDriver` (forward to `MobileDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | `IAutomationDriver` (forward to `MobileDriver`) | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | `ILocatorResolver` / `MobileLocatorResolver` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
+| `INavigator` / `MobileNavigator` | `AddAutomation` | singleton | `SpicyTofu:Platform` = `Mobile` |
 | Config option bindings | platform extension | - | always |
 
 Only one `IAutomationDriver` registration exists per process, matching the selected platform.

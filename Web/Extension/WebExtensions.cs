@@ -25,7 +25,7 @@ public static class WebExtensions
     {
         services.Configure<SpicyTofuConfig>(
             configuration.GetSection("SpicyTofu"));
-        
+
         services.Configure<Projects>(
             configuration.GetSection("Projects"));
 

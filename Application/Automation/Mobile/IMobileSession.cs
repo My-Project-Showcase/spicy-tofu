@@ -9,4 +9,6 @@ public interface IMobileSession
     string Name { get; }
 
     Task<IResolvedElement?> ResolveAsync(Locator locator);
+
+    Task NavigateAsync(string url);
 }

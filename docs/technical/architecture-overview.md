@@ -1,6 +1,6 @@
 ---
 title: Architecture Overview
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../../spicy-tofu.sln
   - ../../Domain/Domain.csproj
@@ -9,6 +9,7 @@ sources:
   - ../../SharedKernel/SharedKernel.csproj
   - ../../Web/Web.csproj
   - ../../Mobile/Mobile.csproj
+  - ../../Tests/Tests.csproj
 ---
 
 # Architecture Overview
@@ -17,7 +18,7 @@ Spicy-Tofu is a cross-platform test automation framework for web (Playwright) an
 
 ## Solution layout
 
-The solution `spicy-tofu.sln` contains six projects, each in a same-named top-level folder.
+The solution `spicy-tofu.sln` contains seven projects, each in a same-named top-level folder.
 
 | Project | Type | References | Role |
 |---|---|---|---|
@@ -27,6 +28,7 @@ The solution `spicy-tofu.sln` contains six projects, each in a same-named top-le
 | `Infrastructure` | class library | `Application`, `Domain`, `SharedKernel` | Outward-facing concerns and the Playwright and Appium implementations of the platform contracts |
 | `Web` | executable | `Application`, `Domain`, `Infrastructure` | Web composition root |
 | `Mobile` | executable | `Application`, `Domain`, `Infrastructure` | Mobile composition root and entry point |
+| `Tests` | test library | `Application`, `Domain`, `Infrastructure`, `SharedKernel` | xUnit tests for the core runtime services and the element repository |
 
 All projects target `net9.0` with `Nullable` and `ImplicitUsings` enabled.
 
@@ -59,6 +61,7 @@ Note that the Playwright implementation lives in `Infrastructure.Automation.Web`
 - `Infrastructure`: `Microsoft.Extensions.Configuration`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Hosting`, `Microsoft.Extensions.Options.ConfigurationExtensions` (all 10.0.12), `Microsoft.Playwright` 1.62.0, and `Appium.WebDriver` 8.3.2.
 - `Web`: `Microsoft.Extensions.Configuration`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Hosting`, `Microsoft.Extensions.Options.ConfigurationExtensions` (all 10.0.12).
 - `Mobile`: `Microsoft.Extensions.Configuration`, `Microsoft.Extensions.DependencyInjection`, `Microsoft.Extensions.Hosting`, `Microsoft.Extensions.Options.ConfigurationExtensions` (all 10.0.12).
+- `Tests`: `Microsoft.NET.Test.Sdk` 17.12.0, `xunit` 2.9.2, `xunit.runner.visualstudio` 2.8.2.
 
 ## Application of Playwright and Appium
 

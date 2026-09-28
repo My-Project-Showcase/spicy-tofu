@@ -1,6 +1,6 @@
 ---
 title: Setup and Commands
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../../AGENTS.md
   - ../../Directory.Build.Props
@@ -10,6 +10,7 @@ sources:
   - ../../Infrastructure/Infrastructure.csproj
   - ../../Web/Web.csproj
   - ../../Mobile/Mobile.csproj
+  - ../../Tests/Tests.csproj
   - ../../Web/appsettings.json
   - ../../Mobile/appsettings.json
 ---
@@ -46,7 +47,7 @@ Nothing here is installed by build or test; the server and the device are only s
 dotnet build spicy-tofu.sln
 ```
 
-The solution contains six projects: `Domain`, `Application`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`. All target `net9.0`.
+The solution contains seven projects: `Domain`, `Application`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`, `Tests`. All target `net9.0`.
 
 ## Test
 
@@ -54,7 +55,7 @@ The solution contains six projects: `Domain`, `Application`, `Infrastructure`, `
 dotnet test spicy-tofu.sln
 ```
 
-No test projects exist yet, so this runs as a no-op.
+The `Tests` project runs under xUnit and covers the core runtime services (`TestsLoadedHandler`, `EventService`, `RunService`, `JsonService`) and `SampleElementRepository`, using fakes for the driver, event registry, and logger.
 
 ## Format check
 
@@ -62,7 +63,7 @@ No test projects exist yet, so this runs as a no-op.
 dotnet format spicy-tofu.sln --verify-no-changes
 ```
 
-Style is defined by `.editorconfig` and `Directory.Build.props` and enforced in build (`EnforceCodeStyleInBuild`), with analyzers at `latest-recommended`. `TreatWarningsAsErrors` applies to Release builds only. Using-directive order is a documented convention, not enforced by `dotnet format`: external (`System.*` first, then Microsoft and third-party), then `Application`, `Domain`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`. See AGENTS.md. The format check currently reports violations; see [Known Issues and Discrepancies](../wiki/known-issues-and-discrepancies.md).
+Style is defined by `.editorconfig` and `Directory.Build.props` and enforced in build (`EnforceCodeStyleInBuild`), with analyzers at `latest-recommended`. `TreatWarningsAsErrors` applies to Release builds only. Using-directive order is a documented convention, not enforced by `dotnet format`: external (`System.*` first, then Microsoft and third-party), then `Application`, `Domain`, `Infrastructure`, `SharedKernel`, `Web`, `Mobile`. See AGENTS.md. The format check passes.
 
 ## Configuration sources
 

@@ -8,7 +8,7 @@ namespace Domain.Entities.TestCases;
 /// <summary>
 public class Test : AggregrateRoot
 {
-    public string Id { get; set; }
-    public string Name { get; set; }
-    public List<Workflow> Workflows { get; set; }
+    public new string? Id { get; set; }
+    public new string? Name { get; set; }
+    public List<Workflow>? Workflows { get; set; }
 }

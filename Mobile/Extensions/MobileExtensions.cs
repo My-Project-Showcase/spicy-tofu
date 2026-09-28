@@ -11,7 +11,8 @@ public static class MobileExtensions
     public static IServiceCollection AddMobileDependencies(
         this IServiceCollection service,
         IConfiguration configuration
-    ){
+    )
+    {
 
         service.AddConfigProperties(configuration);
         service.AddEnvCompatibility(configuration);

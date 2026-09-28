@@ -1,6 +1,6 @@
 ---
 title: Design Decisions
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../technical/architecture-overview.md
   - ../technical/automation-driver-contract.md
@@ -9,9 +9,13 @@ sources:
   - ../technical/web-automation.md
   - ../technical/mobile-automation.md
   - ../../Application/Automation/Web/IWebPage.cs
+  - ../../Application/Automation/INavigator.cs
+  - ../../Application/Elements/IResolvedElement.cs
   - ../../Infrastructure/Automation/Web/BrowserHost.cs
   - ../../Infrastructure/Automation/Web/WebDriver.cs
+  - ../../Infrastructure/Automation/Web/WebNavigator.cs
   - ../../Infrastructure/Automation/Mobile/MobileHost.cs
+  - ../../Infrastructure/Automation/Mobile/MobileNavigator.cs
   - ../../Infrastructure/Automation/Mobile/AppiumServerLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/AndroidEmulatorLauncher.cs
   - ../../Infrastructure/Automation/Mobile/Devices/IosSimulatorLauncher.cs
@@ -29,6 +33,7 @@ sources:
   - ../../SharedKernel/Components/Mui/MuiLocators.cs
   - ../../Domain/Events/ITestEvent.cs
   - ../../Domain/Events/EventsRegistry/IEventRegistry.cs
+  - ../../Domain/Entities/Execution/RunResult.cs
 ---
 
 # Design Decisions
@@ -67,6 +72,8 @@ An earlier design had `JsonService` raise a `TestsLoaded` event that `RunService
 
 Events are generic: `ClickEvent` knows only that it must click the element a step names. Application-specific knowledge (which element `LoginButton` is, and how it is located) lives behind `IElementRepository`, the only place the framework meets a specific application's UI. This keeps an event reusable across unrelated applications; only the repository changes. See [Elements and Locators](../technical/elements-and-locators.md).
 
+The registration uses `TryAddSingleton`, so an application can register its own `IElementRepository` before calling `AddInfrastructureDependencies` and have it win over the sample. This is the seam through which a real application supplies its elements without the framework shipping application data.
+
 ## Reusable component knowledge lives in SharedKernel
 
 Component-library locators (MUI, Shadcn, Syncfusion) are reusable and platform-independent, so they live in `SharedKernel/Components`, one static class per library. They describe what can identify a component, not how Playwright or Appium executes it. The application element repository composes them into concrete elements. `SharedKernel` references no Playwright or Appium types.
@@ -74,6 +81,18 @@ Component-library locators (MUI, Shadcn, Syncfusion) are reusable and platform-i
 ## The resolver owns locator selection
 
 `ILocatorResolver` owns candidate ordering and fallback: it walks an element's locator candidates and returns the first that resolves on the running platform. Events never see a locator strategy, a fallback loop, or XPath; they ask the resolver and report the outcome. Platform translation (Playwright `GetByRole`/`GetByTestId`, Appium `MobileBy`) lives in the platform `WebPage`/`MobileSession` implementations.
+
+## Interaction methods live on IResolvedElement
+
+Click, fill, and read operations are methods on `IResolvedElement` (`ClickAsync`, `FillAsync`, `GetTextAsync`), implemented by `WebResolvedElement` and `MobileResolvedElement` against the platform handle. The alternative was a separate interaction service or page-level methods. Putting the operations on the resolved element keeps the event platform-neutral: an event resolves the element, then acts on it through the interface, and never sees a Playwright `ILocator` or a Selenium `IWebElement`. The platform handle stays inside the platform wrapper. Adding a new operation is a contract change implemented once per platform.
+
+## Navigation is a platform-neutral INavigator, not an element method
+
+Navigation is not element-scoped, so it does not fit the `IResolvedElement` pattern. `INavigator` is a small `Application.Automation` interface with `NavigateAsync(string url)`, implemented by `WebNavigator` and `MobileNavigator` and registered per platform in `AddAutomation`. This keeps the platform-neutral `NavigateEvent` free of `IWebDriver` and `IMobileDriver` references while still driving the active session. It follows the AGENTS.md rule: when behavior differs per platform, add a core interface and implement it per platform.
+
+## Per-step failure isolation and a RunResult
+
+`RunService` resolves each step with `IEventRegistry.TryGet` and wraps execution in a try/catch, so an unknown action or a thrown exception becomes a failed step, not a failed run. This replaced the earlier behavior where `IEventRegistry.Get` threw and one bad step aborted the whole run. `RunAsync` returns a `RunResult` with the executed and failed counts, and the entry points map `IsSuccess` to the process exit code (`0` or `1`). Isolating steps is the useful behavior for an automation framework: one broken selector should not hide the result of every later step, and CI needs a pass/fail signal.
 
 ## Timeout injection through options
 

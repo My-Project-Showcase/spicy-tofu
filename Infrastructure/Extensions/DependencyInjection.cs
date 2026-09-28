@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using Application.Automation;
 using Application.Automation.Mobile;
@@ -49,6 +50,7 @@ public static class DependencyInjection
             services.AddSingleton<IWebDriver>(sp => sp.GetRequiredService<WebDriver>());
             services.AddSingleton<IAutomationDriver>(sp => sp.GetRequiredService<WebDriver>());
             services.AddSingleton<ILocatorResolver, WebLocatorResolver>();
+            services.AddSingleton<INavigator, WebNavigator>();
         }
         else if (string.Equals(platform, "Mobile", StringComparison.OrdinalIgnoreCase))
         {
@@ -57,6 +59,7 @@ public static class DependencyInjection
             services.AddSingleton<IMobileDriver>(sp => sp.GetRequiredService<MobileDriver>());
             services.AddSingleton<IAutomationDriver>(sp => sp.GetRequiredService<MobileDriver>());
             services.AddSingleton<ILocatorResolver, MobileLocatorResolver>();
+            services.AddSingleton<INavigator, MobileNavigator>();
         }
         else
         {
@@ -80,7 +83,7 @@ public static class DependencyInjection
         service.AddSingleton<TestsLoadedHandler>();
         service.AddSingleton<IRunService, RunService>();
         service.AddSingleton<IEventRegistry, EventService>();
-        service.AddSingleton<IElementRepository, SampleElementRepository>();
+        service.TryAddSingleton<IElementRepository, SampleElementRepository>();
         service.AddEvents();
         return service;
     }
@@ -90,6 +93,8 @@ public static class DependencyInjection
     )
     {
         service.AddSingleton<ITestEvent, ClickEvent>();
+        service.AddSingleton<ITestEvent, FillEvent>();
+        service.AddSingleton<ITestEvent, NavigateEvent>();
 
         return service;
     }

@@ -17,4 +17,10 @@ public sealed class WebResolvedElement : IResolvedElement
     public Locator Locator { get; }
 
     public ILocator Handle { get; }
+
+    public Task ClickAsync() => Handle.ClickAsync();
+
+    public Task FillAsync(string value) => Handle.FillAsync(value);
+
+    public async Task<string> GetTextAsync() => await Handle.TextContentAsync() ?? string.Empty;
 }

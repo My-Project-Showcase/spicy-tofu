@@ -27,6 +27,8 @@ public sealed class WebPage : IWebPage
         return await handle.CountAsync() > 0 ? new WebResolvedElement(locator, handle) : null;
     }
 
+    public async Task NavigateAsync(string url) => await Page.GotoAsync(url);
+
     private ILocator? TryBuildLocator(Locator locator) =>
         locator.Strategy switch
         {

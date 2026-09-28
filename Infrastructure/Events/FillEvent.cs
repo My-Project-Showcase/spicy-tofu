@@ -9,14 +9,14 @@ using Action = SharedKernel.Attributes.ActionAttribute;
 
 namespace Infrastructure.Events;
 
-[Action("click")]
-public sealed class ClickEvent : ITestEvent
+[Action("fill")]
+public sealed class FillEvent : ITestEvent
 {
     private readonly IElementRepository _elementRepository;
     private readonly ILocatorResolver _locatorResolver;
     private readonly ILogger _logger;
 
-    public ClickEvent(
+    public FillEvent(
         IElementRepository elementRepository,
         ILocatorResolver locatorResolver,
         ILogger logger)
@@ -39,7 +39,7 @@ public sealed class ClickEvent : ITestEvent
                 var resolved = await _locatorResolver.ResolveAsync(element);
                 _logger.LocatorResolution(step, element.Locators, resolved.Locator);
 
-                await resolved.ClickAsync();
+                await resolved.FillAsync(step.Step.Value ?? string.Empty);
 
                 return new TestExecutionResult { IsSuccess = true };
             }

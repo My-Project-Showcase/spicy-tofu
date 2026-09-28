@@ -1,6 +1,6 @@
 ---
 title: Elements and Locators
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../../SharedKernel/Locators/LocatorStrategy.cs
   - ../../SharedKernel/Locators/Locator.cs
@@ -8,6 +8,7 @@ sources:
   - ../../SharedKernel/Components/Mui/MuiLocators.cs
   - ../../SharedKernel/Components/Shadcn/ShadcnLocators.cs
   - ../../SharedKernel/Components/Syncfusion/SyncfusionLocators.cs
+  - ../../Application/Automation/INavigator.cs
   - ../../Application/Elements/IElementRepository.cs
   - ../../Application/Elements/IResolvedElement.cs
   - ../../Application/Locators/ILocatorResolver.cs
@@ -20,6 +21,9 @@ sources:
   - ../../Infrastructure/Automation/Mobile/MobileSession.cs
   - ../../Infrastructure/Automation/Mobile/MobileLocatorResolver.cs
   - ../../Infrastructure/Automation/Mobile/MobileResolvedElement.cs
+  - ../../Infrastructure/Events/ClickEvent.cs
+  - ../../Infrastructure/Events/FillEvent.cs
+  - ../../Infrastructure/Events/NavigateEvent.cs
   - ../../Infrastructure/Extensions/DependencyInjection.cs
 ---
 
@@ -42,7 +46,7 @@ Element (ordered locator candidates)
 ILocatorResolver.ResolveAsync(element)
     |
     v
-IResolvedElement (matched Locator)
+IResolvedElement (matched Locator + interaction)
 ```
 
 `RunService` never sees this layer. `ITestEvent` implementations depend on `IElementRepository` and `ILocatorResolver`, both of which are platform-neutral.
@@ -88,7 +92,7 @@ Platform implementations live in the platform namespaces and are selected at com
 - `WebLocatorResolver` (`Infrastructure.Automation.Web`) iterates `element.Locators` and calls `IWebDriver.Page.ResolveAsync(locator)`.
 - `MobileLocatorResolver` (`Infrastructure.Automation.Mobile`) iterates `element.Locators` and calls the `default` `IMobileSession.ResolveAsync(locator)`.
 
-Both return the first `IResolvedElement` that is not null, or throw `InvalidOperationException` when nothing resolves. `IResolvedElement` exposes the matched `Locator`; the platform wrappers (`WebResolvedElement`, `MobileResolvedElement`) also hold the native handle for future action code.
+Both return the first `IResolvedElement` that is not null, or throw `InvalidOperationException` when nothing resolves. `IResolvedElement` exposes the matched `Locator` plus the interaction methods `ClickAsync`, `FillAsync(string value)`, and `GetTextAsync`. The platform wrappers (`WebResolvedElement`, `MobileResolvedElement`) hold the native handle and implement those methods with the platform API.
 
 ## Platform resolution
 
@@ -115,20 +119,23 @@ The distinction is:
 
 ## Events
 
-`ClickEvent` is the reference event:
+`ClickEvent` and `FillEvent` are the element-based events. `ClickEvent` is the reference:
 
 ```csharp
-var element = _elementRepository.Get(step.Step.Attribute, step.Step.Target);
+var element = _elementRepository.Get(step.Step.Attribute ?? string.Empty, step.Step.Target ?? string.Empty);
 var resolved = await _locatorResolver.ResolveAsync(element);
 _logger.LocatorResolution(step, element.Locators, resolved.Locator);
+await resolved.ClickAsync();
 return new TestExecutionResult { IsSuccess = true };
 ```
 
-It contains no XPath, no application knowledge, and no platform types. On a failed lookup or resolution it returns `TestExecutionResult { IsSuccess = false, Error = ... }` and logs the candidates with no selection, so `RunService` reports `ActionFailed` and the run continues. The click operation itself is not implemented yet; resolution is the behavior under test.
+`FillEvent` is identical except it calls `resolved.FillAsync(step.Step.Value ?? string.Empty)`. Neither contains XPath, application knowledge, or platform types. On a failed lookup or resolution, or a failed interaction, they return `TestExecutionResult { IsSuccess = false, Error = ... }` and log the candidates with no selection, so `RunService` reports `ActionFailed` and the run continues.
+
+`NavigateEvent` is the exception to the element pattern: navigation is not element-scoped, so it drives the platform-neutral `INavigator` seam with `step.Step.Value` as the URL and does not touch the repository or resolver.
 
 ## Registration
 
-`AddServices` registers `IElementRepository` (`SampleElementRepository`) as a singleton, platform-neutral. `AddAutomation` registers `ILocatorResolver` per platform: `WebLocatorResolver` for `Web`, `MobileLocatorResolver` for `Mobile`. See [Dependency Injection](./dependency-injection.md).
+`AddServices` registers `IElementRepository` (`SampleElementRepository`) as a singleton with `TryAddSingleton`, so an application can register its own `IElementRepository` before calling `AddInfrastructureDependencies` and have it win. `AddAutomation` registers `ILocatorResolver` per platform: `WebLocatorResolver` for `Web`, `MobileLocatorResolver` for `Mobile`, and the matching `INavigator`. See [Dependency Injection](./dependency-injection.md).
 
 ## Related pages
 

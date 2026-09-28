@@ -1,9 +1,10 @@
 ---
 title: Automation Driver Contract
-updated: 2026-09-27
+updated: 2026-09-28
 sources:
   - ../../Application/Application.csproj
   - ../../Application/Automation/IAutomationDriver.cs
+  - ../../Application/Automation/INavigator.cs
   - ../../Application/Automation/Web/IWebDriver.cs
   - ../../Application/Automation/Web/IWebPage.cs
   - ../../Application/Automation/Web/IWebSession.cs
@@ -41,9 +42,10 @@ The lifecycle methods `StartAsync` and `StopAsync` come from `IAutomationDriver`
 
 ## IWebPage
 
-`Application.Automation.Web.IWebPage` is the contract seam that lets application code depend on a page without referencing Playwright. It exposes one method:
+`Application.Automation.Web.IWebPage` is the contract seam that lets application code depend on a page without referencing Playwright. It exposes two methods:
 
 - `Task<IResolvedElement?> ResolveAsync(Locator locator)`: try to resolve a single platform-neutral locator against the page, returning null when it does not match.
+- `Task NavigateAsync(string url)`: navigate the page to a URL.
 
 The web implementation (`WebPage`) wraps a Playwright `IPage` and builds native locators from the strategy. See [Elements and Locators](./elements-and-locators.md).
 
@@ -73,12 +75,21 @@ Like `IWebDriver`, the lifecycle methods come from `IAutomationDriver` and are n
 
 - `string Name`
 - `Task<IResolvedElement?> ResolveAsync(Locator locator)`: try to resolve a single platform-neutral locator against the session, returning null when it does not match.
+- `Task NavigateAsync(string url)`: navigate the session to a URL.
 
 The implementation wraps an Appium driver and builds native `By` locators from the strategy. See [Elements and Locators](./elements-and-locators.md).
 
 ## IResolvedElement
 
-`Application.Elements.IResolvedElement` is the platform-neutral result of resolving a locator: it exposes the matched `Locator`. The platform wrappers (`WebResolvedElement`, `MobileResolvedElement`) also hold the native handle for future action code. See [Elements and Locators](./elements-and-locators.md).
+`Application.Elements.IResolvedElement` is the platform-neutral result of resolving a locator. It exposes the matched `Locator` and the interaction methods `Task ClickAsync()`, `Task FillAsync(string value)`, and `Task<string> GetTextAsync()`. The platform wrappers (`WebResolvedElement`, `MobileResolvedElement`) hold the native handle and implement the interaction methods with the platform API. See [Elements and Locators](./elements-and-locators.md).
+
+## INavigator
+
+`Application.Automation.INavigator` is the platform-neutral navigation seam:
+
+- `Task NavigateAsync(string url)`.
+
+Navigation is not element-scoped, so it does not fit the `IResolvedElement` pattern. `INavigator` lets the platform-neutral `NavigateEvent` drive the active session without referencing `IWebDriver` or `IMobileDriver`. `WebNavigator` forwards to `IWebDriver.Page.NavigateAsync`, and `MobileNavigator` forwards to the `default` `IMobileSession.NavigateAsync`. `AddAutomation` registers the implementation for the selected platform.
 
 ## MobileContextOptions
 

@@ -7,4 +7,6 @@ namespace Application.Automation.Web;
 public interface IWebPage
 {
     Task<IResolvedElement?> ResolveAsync(Locator locator);
+
+    Task NavigateAsync(string url);
 }

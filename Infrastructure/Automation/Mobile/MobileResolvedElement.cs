@@ -17,4 +17,18 @@ public sealed class MobileResolvedElement : IResolvedElement
     public Locator Locator { get; }
 
     public IWebElement Handle { get; }
+
+    public Task ClickAsync()
+    {
+        Handle.Click();
+        return Task.CompletedTask;
+    }
+
+    public Task FillAsync(string value)
+    {
+        Handle.SendKeys(value);
+        return Task.CompletedTask;
+    }
+
+    public Task<string> GetTextAsync() => Task.FromResult(Handle.Text);
 }

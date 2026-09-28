@@ -19,4 +19,6 @@ using IHost host = Host.CreateDefaultBuilder(args)
 
 var runner = host.Services.GetRequiredService<IRunService>();
 
-await runner.RunAsync();
+var result = await runner.RunAsync();
+
+return result.IsSuccess ? 0 : 1;
